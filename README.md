@@ -1,6 +1,7 @@
 # Nightflight
 Library to controle LEDs through a Teensy with using acccelerometer and RC receiver input
 
+
 * LEDHardwareAbstraction for creating virtual LED strips from different LED strips controlled over different pins on the Teensy/Arduino
 * LEDEffect for implementation of various effects on LEDs
 * ParameterChange for an abstraction of Parameters to use in LEDEffects
