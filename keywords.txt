@@ -1,0 +1,46 @@
+#######################################
+# Syntax Coloring Map For Nightflight
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+CNightflight	KEYWORD1
+Nightflight	KEYWORD1
+
+#LED Hardware Abstraction
+LEDRow	KEYWORD1
+LEDStrip	KEYWORD1
+LEDVirtualStrip	KEYWORD1
+LEDRegion	KEYWORD1
+
+#LED Effects
+ColorReset	KEYWORD1
+Line	KEYWORD1
+Brightness	KEYWORD1
+KnightRider	KEYWORD1
+Rainbow	KEYWORD1
+Fire	KEYWORD1
+Fade	KEYWORD1
+
+
+#Parameter
+Parameter	KEYWORD1
+StepParameter	KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+#LED Hardware Abstraction
+addLEDStrip	KEYWORD2
+
+#LED Effects
+render	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
