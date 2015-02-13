@@ -43,6 +43,18 @@ public:
 	boolean isDebug() {return _debug;}
 
 	void setMainLoopCallback(RenderTimerFunctionPointer mainLoopCallback);
+
+	void setBPMLoopCallback(RenderTimerFunctionPointer bpmLoopCallback);
+	void setBPM(double bpm);
+	void startBPMTimer();
+	void stopBPMTimer();
+	double getBPMDrift() {return bpmTimerInfoLoop->getBPMDrift();}
+	double getMillisExpected() {return bpmTimerInfoLoop->getMillisExpected();}
+	uint64_t getMillisElapsed() {return bpmTimerInfoLoop->getMillisElapsed();}
+	uint32_t getBPMTimerUpdateMillis() {return bpmTimerInfoLoop->getUpdateIntervalMilliSeconds();}
+	boolean getBeatIsDownbeat() {return bpmTimerInfoLoop->isDownbeat();	}
+
+
 	void setLSM9DS0(LSM9DS0* dof);
 	LSM9DS0* getLSM9DS0() {return _dof;}
 	const byte getAccelInterruptPin() const {return INT1XM;}
@@ -61,25 +73,29 @@ public:
 
 private:
 
-	uint8_t _fpsLEDs;
-	uint8_t _maxRenderFrequency;
-	uint8_t _rcChannelPin;
-	double _absoluteAcceleration = 0.0;
-
 	boolean _debug;
 
+	uint8_t _fpsLEDs;
+	uint8_t _maxRenderFrequency;
+
+	uint8_t _rcChannelPin;
+
+	double _bpmDrift = 0.0;
+
+
 	LSM9DS0* _dof; //(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
+	double _absoluteAcceleration = 0.0;
 	boolean _useLSM9DS0 = false;
 	const byte INT1XM = 23; // INT1XM tells us when accel data is ready
 	const byte INT2XM = 22; // INT2XM tells us when mag data is ready
 	const byte DRDYG = 1;  // DRDYG tells us when gyro data is ready
-	//boolean printRaw = true;
 
 	RenderTimer renderTimer;
 	RenderTimerInfo* renderTimerInfoAccelGyroMagnLoop;
 	RenderTimerInfo* renderTimerInfoMainLoop;
 	RenderTimerInfo* renderTimerInfoLEDLoop;
 	RenderTimerInfo* renderTimerRCInputLoop;
+	BPMTimerInfo* bpmTimerInfoLoop;
 };
 
 

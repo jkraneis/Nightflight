@@ -97,9 +97,9 @@ CNightflight::CNightflight()
 }
 
 CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin) 
-	: _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin), _debug(false)
+	: _debug(false), _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin)
 {
-	delay(1500); // sanity delay
+	delay(3000); // sanity delay
 	Serial.begin(115200);
 
 	//set up pin for RC input
@@ -118,13 +118,15 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin)
 	renderTimerInfoAccelGyroMagnLoop->setUpdateIntervalMilliSeconds(25);
 	renderTimerInfoMainLoop = &renderTimer.getRenderTimerInfo();
 	renderTimerInfoMainLoop->setUpdateIntervalMilliSeconds(25);
-	renderTimerInfoLEDLoop = &renderTimer.getRenderTimerInfo();
-	renderTimerInfoLEDLoop->setCallback(renderTimerInfoLEDLoopCallback);
-	renderTimerInfoLEDLoop->setUpdateIntervalMilliSeconds(1000/_fpsLEDs);
 	renderTimerRCInputLoop = &renderTimer.getRenderTimerInfo();
 	renderTimerRCInputLoop->setCallback(renderTimerInfoRCInputLoopCallback);
 	renderTimerRCInputLoop->setUpdateIntervalMilliSeconds(25);
 
+	bpmTimerInfoLoop = &renderTimer.getBPMTimerInfo();
+
+	renderTimerInfoLEDLoop = &renderTimer.getRenderTimerInfo();
+	renderTimerInfoLEDLoop->setCallback(renderTimerInfoLEDLoopCallback);
+	renderTimerInfoLEDLoop->setUpdateIntervalMilliSeconds(1000/_fpsLEDs);
 }
 
 void CNightflight::setLSM9DS0(LSM9DS0* dof) 
@@ -160,6 +162,26 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 void CNightflight::setMainLoopCallback(RenderTimerFunctionPointer mainLoopCallback)
 {
 	renderTimerInfoMainLoop->setCallback(mainLoopCallback);
+}
+
+void CNightflight::setBPMLoopCallback(RenderTimerFunctionPointer bpmLoopCallback)
+{
+	bpmTimerInfoLoop->setCallback(bpmLoopCallback);
+}
+
+void CNightflight::startBPMTimer()
+{
+	bpmTimerInfoLoop->start();
+}
+
+void CNightflight::stopBPMTimer()
+{
+	bpmTimerInfoLoop->stop();
+}
+
+void CNightflight::setBPM(double bpm)
+{
+	bpmTimerInfoLoop->setBPM(bpm);
 }
 
 boolean CNightflight::isInBlockingLoop()
