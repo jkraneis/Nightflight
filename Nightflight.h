@@ -23,7 +23,7 @@
 
 
 #define FRAMES_PER_SECOND 40
-#define RCCHANNELPIN1 17
+#define RCCHANNELPIN1 0
 
 // SDO_XM and SDO_G are both grounded, therefore our addresses are:
 #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW

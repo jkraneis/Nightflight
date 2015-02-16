@@ -65,7 +65,10 @@ void RCchannel1()
 	if(ledUpdating)
 	{
 		Nightflight.wasUpdating = true;
-		Serial.println("RC Channel read skipped due to blocking LED loop.");
+		if(Nightflight.isDebug())
+		{
+			Serial.println("RC Channel read skipped due to blocking LED loop.");
+		}
 		return;
 	}
 	int chn = digitalRead(RCCHANNELPIN1);
