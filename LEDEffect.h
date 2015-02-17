@@ -10,6 +10,10 @@ struct LEDEffect
 {
 protected:
 	boolean _addRGB;
+
+    boolean _hasBackgroundEffect = false;
+    LEDEffect* _backgroundEffect;
+
 public:
 	LEDEffect() 
 		: _addRGB(false)
@@ -21,36 +25,61 @@ public:
 	{
 	}
 
+    virtual void setBackgroundEffect(LEDEffect* effect)
+    {
+        _backgroundEffect = effect;
+        _hasBackgroundEffect = true;
+        _addRGB = true;
+    }
+
+
 	virtual void render( struct LEDRow &data, uint8_t offset)
     {
+        if(_hasBackgroundEffect)
+        {
+            _backgroundEffect->render(data, offset);
+        }
     }
 };
 
+/*struct LEDPattern : public virtual LEDEffect
+{
+    LEDPattern() 
+        : LEDEffect(false)
+    {
+    }
+};*/
+
+/*
+*   Linear Rainbow effect to switch through the whole Color Space. Set colorStepsPerFrame in Constructor bigger than 1 to get faster color changes.
+*/
 struct Rainbow : public virtual LEDEffect
 {
-    uint8_t _nThFPSFade;
+    uint8_t _colorStepsPerFrame;
     uint8_t _hue;
 
 
     Rainbow() 
-        : LEDEffect(false), _nThFPSFade(1)
+        : LEDEffect(false), _colorStepsPerFrame(1)
     {
     }
 
-    Rainbow(uint8_t nThFPSFade) 
-        : LEDEffect(false),  _nThFPSFade(nThFPSFade)
+    Rainbow(uint8_t colorStepsPerFrame) 
+        : LEDEffect(false),  _colorStepsPerFrame(colorStepsPerFrame)
     {
     }
-
 
     virtual void render( struct LEDRow &data, uint8_t offset)
     {
+        LEDEffect::render(data, offset);
+
         int numLEDs = data.getNumLEDs();
         for( int i = offset; i < numLEDs; i++) 
         {
-            data[i] = CHSV(_hue, 255, 255);
+            data.setLEDColor( i, CHSV(_hue, 255, 255), _addRGB );
+//            data[i] = CHSV(_hue, 255, 255);
         }
-        _hue += _nThFPSFade;
+        _hue += _colorStepsPerFrame;
     }
 };
 
@@ -67,10 +96,12 @@ struct ColorReset : public virtual LEDEffect
 
     virtual void render( struct LEDRow &data, uint8_t offset)
     {
+        LEDEffect::render(data, offset); //there should not be a background effect
+
         int numLEDs = data.getNumLEDs();
         for( int i = offset; i < numLEDs; i++) 
         {
-            data[i] = _colorParameter->getValue();
+            data.setLEDColor( i, _colorParameter->getValue(), _addRGB );
         }
     }
 };
@@ -80,15 +111,14 @@ struct Line : public virtual LEDEffect
     uint8_t     _start;
     uint8_t     _end;
     CRGB        _color;
-    CRGB        _bgColor;
 
     Line() 
-        : LEDEffect(false), _start(0), _end(0), _color(CRGB(255,0,0)), _bgColor(CRGB::Black)
+        : LEDEffect(false), _start(0), _end(0), _color(CRGB(255,0,0))
     {
     }
 
-    Line(uint8_t start, uint8_t end, const CRGB& color, const CRGB& bgColor, boolean addRGB) 
-        : LEDEffect(addRGB), _start(start), _end(end), _color(color), _bgColor(bgColor)
+    Line(uint8_t start, uint8_t end, const CRGB& color, boolean addRGB) 
+        : LEDEffect(addRGB), _start(start), _end(end), _color(color)
     {
     }
 
@@ -117,13 +147,10 @@ struct Line : public virtual LEDEffect
         return _color;
     }
 
-    CRGB& getBackgroundColor()
-    {
-        return _bgColor;
-    }
-
     virtual void render( struct LEDRow &data, uint8_t offset)
     {
+        LEDEffect::render(data, offset);
+
         int numLEDs = data.getNumLEDs();
         for( int i = offset; i < numLEDs; i++) 
         {
@@ -147,55 +174,28 @@ struct Line : public virtual LEDEffect
 struct Brightness : public virtual LEDEffect
 {
     uint8_t     _initialBrightness;
-    uint8_t     _brightness;
     Parameter<uint8_t>* _brightnessParameter;
-    boolean _externalParameter;
 
-    Brightness() 
-        : LEDEffect(true), _initialBrightness(20), _brightness(20), _externalParameter(false)
+    Brightness(Parameter<uint8_t>* brightnessParameter) 
+        : LEDEffect(true), _brightnessParameter(brightnessParameter)
     {
-    }
-
-    Brightness(uint8_t _initialBrightness) 
-        : LEDEffect(true), _initialBrightness(_initialBrightness), _brightness(_initialBrightness), _externalParameter(false)
-    {
+        _initialBrightness = _brightnessParameter->getValue();
     }
 
-    uint8_t getBrightness()
-    {
-        uint8_t returnValue = _brightness;
-        if(_externalParameter)
-        {
-            returnValue = _brightnessParameter->getValue();
-        }
-        return returnValue;
-    }
-
-    void setBrightnessParameter(Parameter<uint8_t> * parameter)
-    {
-        _brightnessParameter = parameter;
-        _externalParameter = true;
-    }
-    
-    void setBrightness(uint8_t newBrightness)
-    {
-        _brightness = newBrightness;
-    }
 
     void reset()
     {
-        _brightness = _initialBrightness;
+        _brightnessParameter->setValue(_initialBrightness);
     }
 
 
     virtual void render( struct LEDRow &data, uint8_t offset)
     {
+        LEDEffect::render(data, offset);
+
         int numLEDs = data.getNumLEDs();
-        uint8_t valueToSet = _brightness;
-        if(_externalParameter)
-        {
-            valueToSet = _brightnessParameter->getValue();
-        }
+        uint8_t valueToSet = _brightnessParameter->getValue();
+
         for(int i = 0 + offset; i < numLEDs; i++) 
         { 
             data[i].nscale8(valueToSet); 
@@ -224,6 +224,8 @@ struct Fire : public virtual LEDEffect
 
     virtual void render( struct LEDRow &data, uint8_t offset)
    	{
+        LEDEffect::render(data, offset);
+
     	int numLEDs = data.getNumLEDs();
   // Step 1.  Cool down every cell a little
 	    for( int i = offset; i < numLEDs; i++) {
@@ -243,7 +245,8 @@ struct Fire : public virtual LEDEffect
 
 	    // Step 4.  Map from heat cells to LED colors
 	    for( int j = offset; j < numLEDs; j++) {
-	        data[j] = HeatColor( heat[j]);
+            data.setLEDColor( j, HeatColor( heat[j]), _addRGB );
+//	        data[j] = HeatColor( heat[j]);
 	    }
    }
 };
@@ -272,6 +275,8 @@ struct Fade : public virtual LEDEffect
 
     virtual void render( struct LEDRow &data, uint8_t offset)
    	{
+        LEDEffect::render(data, offset);
+
     	int numLEDs = data.getNumLEDs();
     	if( _counter >= _step)
     	{
@@ -292,57 +297,32 @@ struct KnightRider : public virtual LEDEffect
 {
 
 	uint8_t 	_lastPos;
-	uint8_t 	_speed;
 	uint8_t 	_range;
 	boolean 	_lastDirection;
-	boolean		_continuous;
-	CRGB		_color;
-	CRGB		_bgColor;
-
-	KnightRider() 
-        : LEDEffect(false), _lastPos(0), _speed(2), _range(1), _lastDirection(true), _continuous(false), _color(CRGB(255,0,0)), _bgColor(CRGB::Black)
+	Parameter<CRGB>* _colorParameter;
+	
+	KnightRider(Parameter<CRGB>* colorParameter) 
+        : KnightRider(0, 1, true, false, colorParameter)
     {
     }
 
-	KnightRider(uint8_t krLastPos, uint8_t krRange, boolean krLastDirection, boolean krContinuous, boolean krAddRGB, const CRGB& color, const CRGB& bgColor) 
-        : LEDEffect(krAddRGB), _lastPos(krLastPos), _speed(2), _range(krRange), _lastDirection(krLastDirection), _continuous(krContinuous), _color(color), _bgColor(bgColor)
+	KnightRider(uint8_t krLastPos, uint8_t krRange, boolean krLastDirection, boolean krAddRGB, Parameter<CRGB>* colorParameter) 
+        : LEDEffect(krAddRGB), _lastPos(krLastPos), _range(krRange), _lastDirection(krLastDirection), _colorParameter(colorParameter)
     {
-    }
-
-    void setColor( const CRGB& color )
-    {
-    	_color = color;
-    }
-
-    CRGB getColor()
-    {
-    	return CRGB(_bgColor);
-    }
-
-    void setBackgroundColor( const CRGB& color )
-    {
-    	_bgColor = color;
-    }
-
-    CRGB getBackgroundColor()
-    {
-    	return CRGB(_bgColor);
     }
 
 
     virtual void render( struct LEDRow &data, uint8_t offset)
     {
+        LEDEffect::render(data, offset);
+
     	int numLEDs = data.getNumLEDs();
     	for( int i = offset; i < offset + numLEDs; i++) 
     	{
 	    	if( i >= ( _lastPos - _range ) && i <= ( _lastPos + _range ) )
 	      	{
-        		data.setLEDColor( i, _color, _addRGB );
+        		data.setLEDColor( i, _colorParameter->getValue(), _addRGB );
 	      	}
-	      	else
-	      	{
-	      		data.setLEDColor( i, _bgColor, _addRGB );
- 	      	}
 	    }
 	    if( _lastDirection )
 	    {
