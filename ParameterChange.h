@@ -12,6 +12,15 @@ public:
 
 	ParameterType _parameterValue;
 
+	Parameter()
+	{
+
+	}
+
+	Parameter(ParameterType initialValue)
+	{
+		_parameterValue = initialValue;
+	}
 
 	virtual void setValue(ParameterType value)
 	{
@@ -26,7 +35,7 @@ public:
 };
 
 
-struct StepParameter : public virtual Parameter<uint16_t>
+/*struct StepParameter : public virtual Parameter<uint16_t>
 {
 public:
 	StepParameter(uint16_t minimum, uint16_t maximum, uint16_t numSteps)
@@ -68,6 +77,6 @@ private:
 	uint16_t _minimum;
 	uint16_t _maximum;
 	uint16_t _numSteps;
-};
+};*/
 
 #endif
