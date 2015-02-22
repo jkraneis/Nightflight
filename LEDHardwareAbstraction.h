@@ -28,7 +28,7 @@ struct LEDStrip : public virtual LEDRow
 	int _numLeds;
 	boolean _directionFrontToBack;
 	int _offset;
-	int _offsetEnd;
+	int _offsetEnd; //means offset from the end of the ledStrip
 
 	LEDStrip(struct CRGB* leds, int numLEDs, boolean directionFrontToBack, int offset = 0, int offsetEnd = 0) 
 		: _leds(leds), _numLeds(numLEDs), _directionFrontToBack(directionFrontToBack), _offset(offset), _offsetEnd(offsetEnd)

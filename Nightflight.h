@@ -64,7 +64,7 @@ public:
 	boolean isInBlockingLoop();
 
 //RC Input Channel implementation - should be wrapped by setter and getter functions.
-	volatile uint16_t channel;
+	volatile uint16_t channel = 1120;
 	uint32_t channel_start;
 	uint16_t currentChannelData;
 	boolean wasUpdating = false;

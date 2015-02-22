@@ -12,24 +12,36 @@ protected:
 	boolean _addRGB;
 
     boolean _hasBackgroundEffect = false;
-    LEDEffect* _backgroundEffect;
+    LEDEffect* _backgroundEffect = NULL;
 
 public:
 	LEDEffect() 
-		: _addRGB(false)
+		: LEDEffect(false, NULL)
 	{
 	}
 
-	LEDEffect(boolean addRGB) 
-		: _addRGB(addRGB)
-	{
-	}
-
-    virtual void setBackgroundEffect(LEDEffect* effect)
+    LEDEffect(boolean addRGB) 
+        : LEDEffect(addRGB, NULL)
     {
-        _backgroundEffect = effect;
-        _hasBackgroundEffect = true;
-        _addRGB = true;
+    }
+
+    LEDEffect(boolean addRGB, LEDEffect* backgroundEffect) 
+        : _addRGB(addRGB)
+    {
+        if(backgroundEffect != NULL)
+        {
+            _backgroundEffect = backgroundEffect;
+            _hasBackgroundEffect = true;
+        }
+    }
+
+    virtual void setBackgroundEffect(LEDEffect* backgroundEffect)
+    {
+        if(backgroundEffect != NULL)
+        {
+            _backgroundEffect = backgroundEffect;
+            _hasBackgroundEffect = true;
+        }
     }
 
 
@@ -302,12 +314,12 @@ struct KnightRider : public virtual LEDEffect
 	Parameter<CRGB>* _colorParameter;
 	
 	KnightRider(Parameter<CRGB>* colorParameter) 
-        : KnightRider(0, 1, true, false, colorParameter)
+        : KnightRider(0, 1, true, false, colorParameter, NULL)
     {
     }
 
-	KnightRider(uint8_t krLastPos, uint8_t krRange, boolean krLastDirection, boolean krAddRGB, Parameter<CRGB>* colorParameter) 
-        : LEDEffect(krAddRGB), _lastPos(krLastPos), _range(krRange), _lastDirection(krLastDirection), _colorParameter(colorParameter)
+	KnightRider(uint8_t krLastPos, uint8_t krRange, boolean krLastDirection, boolean krAddRGB, Parameter<CRGB>* colorParameter, LEDEffect* backgroundEffect = NULL) 
+        : LEDEffect(krAddRGB, backgroundEffect), _lastPos(krLastPos), _range(krRange), _lastDirection(krLastDirection), _colorParameter(colorParameter)
     {
     }
 
