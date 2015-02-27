@@ -122,15 +122,15 @@ struct Line : public virtual LEDEffect
 {
     uint8_t     _start;
     uint8_t     _end;
-    CRGB        _color;
+    Parameter<CRGB>* _colorParameter;
 
-    Line() 
-        : LEDEffect(false), _start(0), _end(0), _color(CRGB(255,0,0))
+    Line(Parameter<CRGB>* colorParameter) 
+        : Line(0, 1 , colorParameter, true)
     {
     }
 
-    Line(uint8_t start, uint8_t end, const CRGB& color, boolean addRGB) 
-        : LEDEffect(addRGB), _start(start), _end(end), _color(color)
+    Line(uint8_t start, uint8_t end, Parameter<CRGB>* colorParameter, boolean addRGB) 
+        : LEDEffect(addRGB), _start(start), _end(end), _colorParameter(colorParameter)
     {
     }
 
@@ -154,11 +154,6 @@ struct Line : public virtual LEDEffect
         _end = end;
     }
 
-    CRGB& getColor()
-    {
-        return _color;
-    }
-
     virtual void render( struct LEDRow &data, uint8_t offset)
     {
         LEDEffect::render(data, offset);
@@ -168,11 +163,11 @@ struct Line : public virtual LEDEffect
         {
             if( (i >= ( offset + _start ) && i <= ( offset + _end )) )
             {
-                data.setLEDColor( i, _color, _addRGB );
+                data.setLEDColor( i, _colorParameter->getValue(), _addRGB );
             }
             else if ((_end < _start && (i >= offset && i<= offset + _end))||(_end < _start && (i < numLEDs && i>= offset + _start))) //this is the case if the end wraps around the max number of LEDs and gets displayed in the beginning of the LED strip whereas the start is still at the end of the strip
             {
-                data.setLEDColor( i, _color, _addRGB );
+                data.setLEDColor( i, _colorParameter->getValue(), _addRGB );
             }
             else
             {
