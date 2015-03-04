@@ -28,7 +28,7 @@ struct LEDStrip : public virtual LEDRow
 	int _numLeds;
 	boolean _directionFrontToBack;
 	int _offset;
-	int _offsetEnd; //means offset from the end of the ledStrip
+	int _offsetEnd; //means offset from the end of the ledStrip: if the strip has 40 LEDs and _offsetEnd is set to 5, this means the end of the strip is 40-5
 
 	LEDStrip(struct CRGB* leds, int numLEDs, boolean directionFrontToBack, int offset = 0, int offsetEnd = 0) 
 		: _leds(leds), _numLeds(numLEDs), _directionFrontToBack(directionFrontToBack), _offset(offset), _offsetEnd(offsetEnd)
@@ -37,7 +37,7 @@ struct LEDStrip : public virtual LEDRow
 
 	virtual CRGB& operator[] (uint16_t x)
 	{
-		int realIndex = _directionFrontToBack ? x + _offsetEnd : _numLeds - _offsetEnd - 1 - x;
+		int realIndex = _directionFrontToBack ? x + _offset : _numLeds - _offsetEnd - 1 - x;
 		return _leds[realIndex];
 	}
 
@@ -54,7 +54,7 @@ struct LEDStrip : public virtual LEDRow
 	//ledIndex is zero based!
 	virtual void setLEDColor(int ledIndex, const CRGB& color, boolean addColor)
 	{
-		int realIndex = _directionFrontToBack ? ledIndex + _offsetEnd : _numLeds - _offsetEnd - 1 - ledIndex;
+		int realIndex = _directionFrontToBack ? ledIndex + _offset : _numLeds - _offsetEnd - 1 - ledIndex;
 		if( !addColor )
 		{
 			_leds[realIndex] = CRGB::Black;
