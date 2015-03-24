@@ -62,6 +62,8 @@ public:
     }
 };*/
 
+    
+
 /*
 *   Linear Rainbow effect to switch through the whole Color Space. Set colorStepsPerFrame in Constructor bigger than 1 to get faster color changes.
 */
@@ -69,6 +71,7 @@ struct Rainbow : public virtual LEDEffect
 {
     uint8_t _colorStepsPerFrame;
     uint8_t _hue;
+    Parameter<uint8_t> *_changeSpeedParameter;
 
 
     Rainbow() 
@@ -173,6 +176,40 @@ struct Line : public virtual LEDEffect
             {
                 //This would be setting the background color but we switch to an extra effect of a color reset.
                 //data.setLEDColor( i, _bgColor, _addRGB );
+            }
+        }
+    }
+};
+
+
+struct Radius : public virtual LEDEffect
+{
+    Parameter<uint8_t>* _position;
+    Parameter<uint8_t>* _radius;
+    Parameter<CRGB>* _colorParameter;
+
+    Radius(Parameter<uint8_t>* position, Parameter<uint8_t>* radius, Parameter<CRGB>* colorParameter, boolean addRGB) 
+        : LEDEffect(addRGB), _position(position), _radius(radius), _colorParameter(colorParameter)
+    {
+    }
+
+
+    virtual void render( struct LEDRow &data, uint8_t offset)
+    {
+        LEDEffect::render(data, offset);
+
+        int numLEDs = data.getNumLEDs();
+        for( int i = offset; i < numLEDs; i++) 
+        {
+            int start = _position->getValue() - _radius->getValue();
+            int end = _position->getValue() + _radius->getValue(); 
+            if(start < offset || end > numLEDs) //check if the led number is in bounds
+            {
+                continue; 
+            }
+            if( (i >= ( offset + start ) && i <= ( offset + end )) )
+            {
+                data.setLEDColor( i, _colorParameter->getValue(), _addRGB );
             }
         }
     }
