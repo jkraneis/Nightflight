@@ -18,6 +18,7 @@
 #include "LEDHardwareAbstraction.h"
 #include "LEDEffect.h"
 #include "ParameterChange.h"
+#include "ParameterEffect.h"
 #include "Vector.h"
 #include "RenderTimer.h"
 
