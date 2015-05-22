@@ -33,6 +33,7 @@ CNightflight Nightflight;
 void renderTimerInfoRCInputLoopCallback()
 {
     Nightflight.currentChannelData = Nightflight.channel;
+    Nightflight.currentChannelData2 = Nightflight.channel2;
     if(Nightflight.isDebug())
     {
 		Serial.print("Channel: ");
@@ -132,57 +133,94 @@ void renderTimerInfoAccelGyroMagnLoopCallback()
 
 void RCchannel1() 
 {
-	// If the pin is HIGH, start a timer
-	boolean ledUpdating = Nightflight.isInBlockingLoop();
-	if(ledUpdating)
-	{
-		Nightflight.wasUpdating = true;
-		if(Nightflight.isDebug())
-		{
-			Serial.println("RC Channel read skipped due to blocking LED loop.");
-		}
-		return;
-	}
-	int chn = digitalRead(RCCHANNELPIN1);
-	if (chn == HIGH) 
-	{
-		Nightflight.channel_start = micros();
-	} 
-	else 
-	{
-		// The pin is now LOW so output the difference
-		// between when the timer was started and now
-		if(!Nightflight.wasUpdating)
-		{
-			Nightflight.channel = (uint16_t) (micros() - Nightflight.channel_start);
-		}
-		else
-		{
-			Nightflight.wasUpdating = false;
-		}
-	}
+    // If the pin is HIGH, start a timer
+    boolean ledUpdating = Nightflight.isInBlockingLoop();
+    if(ledUpdating)
+    {
+        Nightflight.wasUpdating = true;
+        if(Nightflight.isDebug())
+        {
+            Serial.println("RC Channel read skipped due to blocking LED loop.");
+        }
+        return;
+    }
+    int chn = digitalRead(RCCHANNELPIN1);
+    if (chn == HIGH) 
+    {
+        Nightflight.channel_start = micros();
+    } 
+    else 
+    {
+        // The pin is now LOW so output the difference
+        // between when the timer was started and now
+        if(!Nightflight.wasUpdating)
+        {
+            Nightflight.channel = (uint16_t) (micros() - Nightflight.channel_start);
+        }
+        else
+        {
+            Nightflight.wasUpdating = false;
+        }
+    }
+}
+
+//RC Input Channel implementations
+
+void RCchannel2() 
+{
+    // If the pin is HIGH, start a timer
+    boolean ledUpdating = Nightflight.isInBlockingLoop();
+    if(ledUpdating)
+    {
+        Nightflight.wasUpdating2 = true;
+        if(Nightflight.isDebug())
+        {
+            Serial.println("RC Channel read skipped due to blocking LED loop.");
+        }
+        return;
+    }
+    int chn = digitalRead(RCCHANNELPIN2);
+    if (chn == HIGH) 
+    {
+        Nightflight.channel_start2 = micros();
+    } 
+    else 
+    {
+        // The pin is now LOW so output the difference
+        // between when the timer was started and now
+        if(!Nightflight.wasUpdating2)
+        {
+            Nightflight.channel2 = (uint16_t) (micros() - Nightflight.channel_start2);
+        }
+        else
+        {
+            Nightflight.wasUpdating2 = false;
+        }
+    }
 }
 
 
 
 
 CNightflight::CNightflight() 
-	: CNightflight(FRAMES_PER_SECOND, RCCHANNELPIN1)
+	: CNightflight(FRAMES_PER_SECOND, RCCHANNELPIN1, RCCHANNELPIN2)
 {
 }
 
-CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin) 
-	: _debug(false), _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin)
+CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChannelPin2) 
+	: _debug(false), _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin), _rcChannelPin2(rcChannelPin2)
 {
 	delay(3000); // sanity delay
 	Serial.begin(115200);
 
 	//set up pin for RC input
-	pinMode(_rcChannelPin, INPUT);
+    pinMode(_rcChannelPin, INPUT);
+    pinMode(_rcChannelPin2, INPUT);
 
 	// Attach an interrupt handler to be called whenever
 	// the pin changes from LOW to HIGH or vice versa
-	attachInterrupt(_rcChannelPin, RCchannel1, CHANGE);
+    attachInterrupt(_rcChannelPin, RCchannel1, CHANGE);
+    attachInterrupt(_rcChannelPin2, RCchannel2, CHANGE);
 
 
 
@@ -222,7 +260,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 
 	// Use the begin() function to initialize the LSM9DS0 library.
 	// You can either call it with no parameters (the easy way):
-	uint32_t status = _dof->begin(_dof->G_SCALE_2000DPS, _dof->A_SCALE_16G, _dof->M_SCALE_8GS);
+	uint32_t status = _dof->begin(_dof->G_SCALE_500DPS, _dof->A_SCALE_16G, _dof->M_SCALE_8GS);
 	// Or call it with declarations for sensor scales and data rates:  
 
 	if(_debug)

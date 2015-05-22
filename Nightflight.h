@@ -25,6 +25,7 @@
 
 #define FRAMES_PER_SECOND 40
 #define RCCHANNELPIN1 0
+#define RCCHANNELPIN2 17
 
 // SDO_XM and SDO_G are both grounded, therefore our addresses are:
 #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
@@ -56,7 +57,7 @@ class CNightflight
 
 public:
 	CNightflight();
-	CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin);
+	CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChannelPin2);
 	void loop();
 
 	void setDebug(boolean debug) {_debug = debug;}
@@ -92,6 +93,11 @@ public:
 	uint16_t currentChannelData;
 	boolean wasUpdating = false;
 
+	volatile uint16_t channel2 = 1120;
+	uint32_t channel_start2;
+	uint16_t currentChannelData2;
+	boolean wasUpdating2 = false;
+
 
 //9DoF variables for direct access :(
 
@@ -115,6 +121,7 @@ private:
 	uint8_t _maxRenderFrequency;
 
 	uint8_t _rcChannelPin;
+	uint8_t _rcChannelPin2;
 
 	double _bpmDrift = 0.0;
 
