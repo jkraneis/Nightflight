@@ -51,27 +51,35 @@ struct ParameterTimeLinear : public virtual ParameterTimeEffect
     uint8_t _end;
     uint32_t _duration;
     boolean _randomize;
+    uint8_t _randomizeBy;
     Parameter<uint8_t>* _value;
 
-    ParameterTimeLinear(uint8_t start, uint8_t end, uint32_t durationInMillis, Parameter<uint8_t>* value, boolean randomize = false)
+    ParameterTimeLinear(uint8_t start, uint8_t end, uint32_t durationInMillis, Parameter<uint8_t>* value, uint8_t randomizeBy = 0)
     {
         _start = start;
         _end = end;
         _duration = durationInMillis;
         _value = value;
-        _randomize = randomize;
+        _randomize = randomizeBy > 0;
+        _randomizeBy = randomizeBy;
     }
 
     virtual void calculateValue()
     {
         uint64_t now = millis();
-        if(now > _startTime && now < _startTime + _duration)
+        if(now > _startTime /*&& now < _startTime + _duration*/)
         {
             uint32_t elapsed = now - _startTime;
-            uint8_t newValue = (uint8_t)map(elapsed, 0, _duration, _start, _end);
-            if(_randomize && newValue < 255)
+            if(now > _startTime + _duration)
             {
-                newValue = random(newValue-1, newValue+1);
+                elapsed = _duration;
+            }
+            uint8_t newValue = (uint8_t)map(elapsed, 0, _duration, _start, _end);
+            if(_randomize)
+            {
+                uint8_t randMin = min(_randomizeBy, newValue);
+                uint8_t randMax = min(_randomizeBy, 255-newValue);
+                newValue = random(newValue-randMin, newValue+randMax);
             }
             _value->setValue(newValue);
         }
