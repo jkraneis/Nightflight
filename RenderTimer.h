@@ -180,7 +180,7 @@ struct BPMTimerInfo : public virtual RenderTimerInfo
 		{
 			_calculatedUpdateIntervalMilliseconds = _updateIntervalMilliSeconds;
 		}
-}
+	}
 
 	virtual void setUpdateIntervalMilliSeconds(uint64_t interval)
 	{
@@ -189,9 +189,12 @@ struct BPMTimerInfo : public virtual RenderTimerInfo
 
 	virtual void performUpdate()
 	{
-		calculateUpdateInterval();
+		if(_started)
+		{
+			calculateUpdateInterval();
 
-		RenderTimerInfo::performUpdate();
+			RenderTimerInfo::performUpdate();
+		}
 	}
 
 	//overwrite to make sure the rounding error doesn't get high
