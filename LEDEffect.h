@@ -187,9 +187,10 @@ struct Radius : public virtual LEDEffect
     Parameter<uint8_t>* _position;
     Parameter<uint8_t>* _radius;
     Parameter<CRGB>* _colorParameter;
+    boolean _doCircle;
 
-    Radius(Parameter<uint8_t>* position, Parameter<uint8_t>* radius, Parameter<CRGB>* colorParameter, boolean addRGB) 
-        : LEDEffect(addRGB), _position(position), _radius(radius), _colorParameter(colorParameter)
+    Radius(Parameter<uint8_t>* position, Parameter<uint8_t>* radius, Parameter<CRGB>* colorParameter, boolean addRGB, boolean doCircle = false) 
+        : LEDEffect(addRGB), _position(position), _radius(radius), _colorParameter(colorParameter), _doCircle(doCircle)
     {
     }
 
@@ -203,11 +204,11 @@ struct Radius : public virtual LEDEffect
         {
             int start = _position->getValue() - _radius->getValue();
             int end = _position->getValue() + _radius->getValue(); 
-            if(start < offset || end > numLEDs) //check if the led number is in bounds
+            /*if(start < offset || end > numLEDs) //check if the led number is in bounds
             {
                 continue; 
-            }
-            if( (i >= ( offset + start ) && i <= ( offset + end )) )
+            }*/
+            if( (i >= ( offset + start ) && i <= ( offset + end )) || (_doCircle && ( (((end % numLEDs-1) + offset >= i) && end % numLEDs <= _radius->getValue() ) || (start - offset + numLEDs <= i) ) ) )
             {
                 data.setLEDColor( i, _colorParameter->getValue(), _addRGB );
             }
