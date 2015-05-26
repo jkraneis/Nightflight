@@ -257,7 +257,6 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 	pinMode(INT1XM, INPUT);
 	pinMode(INT2XM, INPUT);
 	pinMode(DRDYG, INPUT);
-
 	// Use the begin() function to initialize the LSM9DS0 library.
 	// You can either call it with no parameters (the easy way):
 	uint32_t status = _dof->begin(_dof->G_SCALE_500DPS, _dof->A_SCALE_16G, _dof->M_SCALE_8GS);
@@ -291,6 +290,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 	_dof->setMagODR(_dof->M_ODR_625); // Set magnetometer to update every 80 ms
 	// Use the FIFO mode to average accelerometer and gyro readings to calculate the biases, which can then be removed from
 	// all subsequent measurements.
+    delay(2000);
 	_dof->calLSM9DS0(gbias, abias);
 }
 
