@@ -97,7 +97,7 @@ void setupIndividual()
   vStripObenRundrum.addLEDStrip(stripHaubeLinksOben2);
   vStripObenRundrum.addLEDStrip(stripHaubeRechtsOben);
 
-  vStripUntenRundrum.addLEDStrip(stripHeckRechtsUnten2);
+  vStripUntenRundrum.addLEDStrip(stripHeckRechtsUnten);
   vStripUntenRundrum.addLEDStrip(stripHeckLinksUnten2);
   vStripUntenRundrum.addLEDStrip(stripHaubeLinksUnten2);
   vStripUntenRundrum.addLEDStrip(stripHaubeRechtsUnten);
@@ -108,7 +108,7 @@ void setupIndividual()
 
 void setRcChannelValues()
 {
-  uint8_t rcChannel1Value = 0;
+  uint8_t rcChannel1Value = 199;
 
   if(Nightflight.currentChannelData > 880 && Nightflight.currentChannelData < 1000)
   {
