@@ -9,10 +9,9 @@
 
 #include <stdint.h>
 #include <FastLED.h>
-#include <SPI.h> // Included for SFE_LSM9DS0 library
-#include <i2c_t3.h>
-#include <SFE_LSM9DS0.h>
 
+
+class LSM9DS0;
 
 
 #include "LEDHardwareAbstraction.h"
@@ -24,8 +23,11 @@
 
 
 #define FRAMES_PER_SECOND 40
+
+// This needs to change for input from XBee
 #define RCCHANNELPIN1 0
 #define RCCHANNELPIN2 17
+#define NIGHTFLIGHT_BASESTATION true
 
 // SDO_XM and SDO_G are both grounded, therefore our addresses are:
 #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
@@ -112,10 +114,14 @@ public:
 	float temperature;
 	float abias[3] = {0, 0, 0}, gbias[3] = {0, 0, 0};
 
+//Base Station data retrieval
+	uint8_t _rms[7] = {0, 0, 0, 0, 0, 0, 0};
+
 
 private:
 
 	boolean _debug;
+
 
 	uint8_t _fpsLEDs;
 	uint8_t _maxRenderFrequency;
@@ -129,6 +135,7 @@ private:
 	LSM9DS0* _dof; //(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
 	double _absoluteAcceleration = 0.0;
 	boolean _useLSM9DS0 = false;
+	//LSM9DS0 PIN Declarations
 	const byte INT1XM = 23; // INT1XM tells us when accel data is ready
 	const byte INT2XM = 22; // INT2XM tells us when mag data is ready
 	const byte DRDYG = 1;  // DRDYG tells us when gyro data is ready
@@ -137,7 +144,7 @@ private:
 
 	RenderTimer renderTimer;
 	RenderTimerInfo* renderTimerInfoGyroUpdateLoop;
-	RenderTimerInfo* renderTimerInfoAccelGyroMagnLoop;
+	RenderTimerInfo* renderTimerInfoBaseStationDataLoop;
 	RenderTimerInfo* renderTimerInfoMainLoop;
 	RenderTimerInfo* renderTimerInfoLEDLoop;
 	RenderTimerInfo* renderTimerRCInputLoop;

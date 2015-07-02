@@ -21,6 +21,17 @@ and you've found our code helpful, please buy us a round!
 Distributed as-is; no warranty is given.
 ******************************************************************************/
 
+//Forward declaration for LSM9DS0 class - if not used
+class LSM9DS0;
+// includes for the LSM9DS0 library
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
+#include <SPI.h>
+#include <i2c_t3.h>
+#include <SFE_LSM9DS0.h>
+#else
+//Forward declaration for LSM9DS0 class - if not used
+class LSM9DS0;
+#endif
 
 
 
@@ -51,6 +62,7 @@ void MahonyQuaternionUpdate(float ax, float ay, float az, float gx, float gy, fl
 
 void renderTimerInfoGyroUpdateLoopCallback()
 {
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
 	LSM9DS0* dof = Nightflight.getLSM9DS0();
 	
 	const byte INT1XM = Nightflight.getAccelInterruptPin();
@@ -93,40 +105,22 @@ void renderTimerInfoGyroUpdateLoopCallback()
  //MahonyQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f, mx, my, mz);
  
  Nightflight.updateGyroData();
+#endif 
 }
 
-void renderTimerInfoAccelGyroMagnLoopCallback()
+void renderTimerInfoBaseStationDataLoopCallback()
 {
-/*	LSM9DS0* dof = Nightflight.getLSM9DS0();
-	const byte accelPin = Nightflight.getAccelInterruptPin();
-	if (digitalRead(accelPin))
-	{
-		// Use the readAccel() function to get new data from the accel.
-		// After calling this function, new values will be stored in
-		// the ax, ay, and az variables.
-		dof->readAccel();
-		double ax = dof->calcAccel(dof->ax);
-		double ay = dof->calcAccel(dof->ay);
-		double az = dof->calcAccel(dof->az);
+  if (Serial1.available() >= 7)//  && (millis() - startTime) < 1000/60 ) 
+  {
+    Nightflight._rms[0] = Serial1.read();
+    Nightflight._rms[1] = Serial1.read();
+    Nightflight._rms[2] = Serial1.read();
+    Nightflight._rms[3] = Serial1.read();
+    Nightflight._rms[4] = Serial1.read();
+    Nightflight._rms[5] = Serial1.read();
+    Nightflight._rms[6] = Serial1.read();
+  }
 
-		double absAcc = fabs(ax)+fabs(ay)+fabs(az);
-		Nightflight.setAbsoluteAcceleration(absAcc);
-
-		if(Nightflight.isDebug())
-		{
-			Serial.print("A: ");
-			// Using the calcAccel helper function, we can get the
-			// accelerometer readings in g's.
-			Serial.print(ax);
-			Serial.print(", ");
-			Serial.print(ay);
-			Serial.print(", ");
-			Serial.println(az);
-
-			Serial.print("AbsolutAcceleration: ");
-			Serial.println(absAcc);
-		}
-	}*/
 }
 
 //RC Input Channel implementations
@@ -212,6 +206,7 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 {
 	delay(3000); // sanity delay
 	Serial.begin(115200);
+    Serial1.begin(115200);
 
 	//set up pin for RC input
     pinMode(_rcChannelPin, INPUT);
@@ -229,9 +224,10 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 	renderTimerInfoGyroUpdateLoop->setCallback(renderTimerInfoGyroUpdateLoopCallback);
 	renderTimerInfoGyroUpdateLoop->setUpdateIntervalMilliSeconds(0);
 
-	renderTimerInfoAccelGyroMagnLoop = &renderTimer.getRenderTimerInfo();
-	renderTimerInfoAccelGyroMagnLoop->setCallback(renderTimerInfoAccelGyroMagnLoopCallback);
-	renderTimerInfoAccelGyroMagnLoop->setUpdateIntervalMilliSeconds(25);
+	renderTimerInfoBaseStationDataLoop = &renderTimer.getRenderTimerInfo();
+	renderTimerInfoBaseStationDataLoop->setCallback(renderTimerInfoBaseStationDataLoopCallback);
+	renderTimerInfoBaseStationDataLoop->setUpdateIntervalMilliSeconds(1000/_fpsLEDs);
+
 	renderTimerInfoMainLoop = &renderTimer.getRenderTimerInfo();
 	renderTimerInfoMainLoop->setUpdateIntervalMilliSeconds(25);
 	renderTimerRCInputLoop = &renderTimer.getRenderTimerInfo();
@@ -247,6 +243,7 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 
 void CNightflight::setLSM9DS0(LSM9DS0* dof) 
 {
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
 	if(_debug)
 	{
 		Serial.println("setLSM9DS0 start");
@@ -292,6 +289,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 	// all subsequent measurements.
     delay(2000);
 	_dof->calLSM9DS0(gbias, abias);
+#endif
 }
 
 void CNightflight::updateGyroData()
