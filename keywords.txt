@@ -23,22 +23,28 @@ KnightRider	KEYWORD1
 Rainbow	KEYWORD1
 Fire	KEYWORD1
 Fade	KEYWORD1
-
+Radius	KEYWORD1
 
 #Parameter
 Parameter	KEYWORD1
 StepParameter	KEYWORD1
-
+ParameterTimeLinear	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
+
+getAbsoluteAcceleration	KEYWORD2
 
 #LED Hardware Abstraction
 addLEDStrip	KEYWORD2
 
 #LED Effects
 render	KEYWORD2
+
+#Parameter
+setValue	KEYWORD2
+getValue	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
