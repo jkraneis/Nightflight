@@ -102,7 +102,7 @@ void renderTimerInfoGyroUpdateLoopCallback()
   // This is ok by aircraft orientation standards!  
   // Pass gyro rate as rad/s
    MadgwickQuaternionUpdate(Nightflight.ax, Nightflight.ay, Nightflight.az, Nightflight.gx*PI/180.0f, Nightflight.gy*PI/180.0f, Nightflight.gz*PI/180.0f, Nightflight.mx, Nightflight.my, Nightflight.mz);
- //MahonyQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f, mx, my, mz);
+ //MahonyQuaternionUpdate(Nightflight.ax, Nightflight.ay, Nightflight.az, Nightflight.gx*PI/180.0f, Nightflight.gy*PI/180.0f, Nightflight.gz*PI/180.0f, Nightflight.mx, Nightflight.my, Nightflight.mz);
  
  Nightflight.updateGyroData();
 #endif 

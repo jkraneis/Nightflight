@@ -25,8 +25,8 @@ class LSM9DS0;
 #define FRAMES_PER_SECOND 40
 
 // This needs to change for input from XBee
-#define RCCHANNELPIN1 0
-#define RCCHANNELPIN2 17
+#define RCCHANNELPIN1 17
+#define RCCHANNELPIN2 2
 #define NIGHTFLIGHT_BASESTATION true
 
 // SDO_XM and SDO_G are both grounded, therefore our addresses are:
@@ -116,6 +116,8 @@ public:
 
 //Base Station data retrieval
 	uint8_t _rms[7] = {0, 0, 0, 0, 0, 0, 0};
+
+//	LEDVirtualStrip* _allStrips[];
 
 
 private:
