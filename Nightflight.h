@@ -10,9 +10,9 @@
 #include <stdint.h>
 #include <FastLED.h>
 
+#define NIGHTFLIGHTUSELSMDM9DF0
 
 class LSM9DS0;
-
 
 #include "LEDHardwareAbstraction.h"
 #include "LEDEffect.h"
@@ -26,7 +26,7 @@ class LSM9DS0;
 
 // This needs to change for input from XBee
 #define RCCHANNELPIN1 17
-#define RCCHANNELPIN2 2
+#define RCCHANNELPIN2 18
 #define NIGHTFLIGHT_BASESTATION true
 
 // SDO_XM and SDO_G are both grounded, therefore our addresses are:
@@ -66,6 +66,7 @@ public:
 	boolean isDebug() {return _debug;}
 
 	void setMainLoopCallback(RenderTimerFunctionPointer mainLoopCallback);
+	void resetMainLoopCallback();
 
 	void setBPMLoopCallback(RenderTimerFunctionPointer bpmLoopCallback);
 	void setBPM(double bpm);
@@ -83,11 +84,13 @@ public:
 	const byte getAccelInterruptPin() const {return INT1XM;}
 	const byte getGyroInterruptPin() const {return DRDYG;}
 	const byte getMaglInterruptPin() const {return INT2XM;}
-	double getAbsoluteAcceleration() {return _absoluteAcceleration;}
+	double getAbsoluteAcceleration() {return _absoluteAcceleration; _numberGyroCalls = 0;}
 	void setAbsoluteAcceleration(double absAcc) {_absoluteAcceleration = absAcc;}
 	void updateGyroData();
 
 	boolean isInBlockingLoop();
+
+
 
 //RC Input Channel implementation - should be wrapped by setter and getter functions.
 	volatile uint16_t channel = 1120;
@@ -107,6 +110,11 @@ public:
 	float deltat = 0.0f;        // integration interval for both filter schemes
 	uint32_t lastUpdate = 0;    // used to calculate integration interval
 	uint32_t Now = 0;           // used to calculate integration interval
+	double _absoluteAcceleration = 0.0;
+
+	uint64_t _numberGyroCalls = 0;
+	uint64_t _startTime = 0;
+	bool _initialized = false;
 
 	float ax, ay, az, gx, gy, gz, mx, my, mz; // variables to hold latest sensor data values 
 	float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};    // vector to hold quaternion
@@ -117,8 +125,8 @@ public:
 //Base Station data retrieval
 	uint8_t _rms[7] = {0, 0, 0, 0, 0, 0, 0};
 
-//	LEDVirtualStrip* _allStrips[];
 
+	boolean _logHeaderWritten;
 
 private:
 
@@ -135,22 +143,25 @@ private:
 
 
 	LSM9DS0* _dof; //(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
-	double _absoluteAcceleration = 0.0;
 	boolean _useLSM9DS0 = false;
 	//LSM9DS0 PIN Declarations
-	const byte INT1XM = 23; // INT1XM tells us when accel data is ready
-	const byte INT2XM = 22; // INT2XM tells us when mag data is ready
-	const byte DRDYG = 1;  // DRDYG tells us when gyro data is ready
-
+	const byte INT1XM = 27; // INT1XM tells us when accel data is ready
+	const byte INT2XM = 32; // INT2XM tells us when mag data is ready
+	const byte DRDYG = 24;  // DRDYG tells us when gyro data is ready
+	const byte SDOpin = 31;  // selects either of two I2C addresses
 
 
 	RenderTimer renderTimer;
 	RenderTimerInfo* renderTimerInfoGyroUpdateLoop;
+	RenderTimerInfo* renderTimerInfoJlogLoop;
 	RenderTimerInfo* renderTimerInfoBaseStationDataLoop;
 	RenderTimerInfo* renderTimerInfoMainLoop;
 	RenderTimerInfo* renderTimerInfoLEDLoop;
 	RenderTimerInfo* renderTimerRCInputLoop;
 	BPMTimerInfo* bpmTimerInfoLoop;
+
+
+	RenderTimerFunctionPointer _mainBackupFunctionPointer = NULL;
 };
 
 

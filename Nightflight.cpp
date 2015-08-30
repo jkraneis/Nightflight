@@ -33,7 +33,7 @@ class LSM9DS0;
 class LSM9DS0;
 #endif
 
-
+#define THESERIAL Serial
 
 //Instance of CNightflight
 CNightflight Nightflight;
@@ -57,6 +57,11 @@ void renderTimerInfoLEDLoopCallback()
     FastLED.show(); // display this frame
 }
 
+void initializerCallback()
+{
+
+}
+
 void MadgwickQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
 void MahonyQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
 
@@ -78,11 +83,14 @@ void renderTimerInfoGyroUpdateLoopCallback()
   
   if(digitalRead(INT1XM)) {  // When new accelerometer data is ready
     dof->readAccel();         // Read raw accelerometer data
+    double oldAcc = Nightflight._absoluteAcceleration * Nightflight._numberGyroCalls;
     Nightflight.ax = dof->calcAccel(dof->ax) - Nightflight.abias[0];   // Convert to g's, remove accelerometer biases
     Nightflight.ay = dof->calcAccel(dof->ay) - Nightflight.abias[1];
     Nightflight.az = dof->calcAccel(dof->az) - Nightflight.abias[2];
-		double absAcc = fabs(Nightflight.ax)+fabs(Nightflight.ay)+fabs(Nightflight.az);
-		Nightflight.setAbsoluteAcceleration(absAcc);
+
+	double absAcc = (fabs(Nightflight.ax)+fabs(Nightflight.ay)+fabs(Nightflight.az));
+    double absAccCalc = (oldAcc + absAcc) / (Nightflight._numberGyroCalls + 1);
+	Nightflight.setAbsoluteAcceleration(absAccCalc);
   }
   
   if(digitalRead(INT2XM)) {  // When new magnetometer data is ready
@@ -107,6 +115,113 @@ void renderTimerInfoGyroUpdateLoopCallback()
  Nightflight.updateGyroData();
 #endif 
 }
+
+void renderTimerInfoJlogLoopCallback()
+{
+    if(!Nightflight._initialized)
+    {
+        return;
+    }
+    if(!Nightflight._logHeaderWritten)
+    {
+        THESERIAL.print("$N$;My Data\r\n");
+        THESERIAL.print("$C$;AccX [G];AccY [G];AccZ [G];GyX [DPS];GyY [DPS];GyZ [DPS];Pitch [Deg];Yaw [Deg]; Roll [Deg];AbsAcc [G]\r\n");
+        THESERIAL.print("$I$;12\r\n");
+        //char headerString [200];
+        //strcpy(headerString, "");
+        //strcat(headerString, "$N$;My Data\r\n");
+        //strcat(headerString, "$C$;AccX [G];AccY [G];AccZ [G];GyX [DPS];GyY [DPS];GyZ [DPS];Pitch [Deg];Yaw [Deg]; Roll [Deg];AbsAcc [G]\r\n");
+        //strcat(headerString, "$I$;8\r\n");
+        //THESERIAL.print(headerString);
+        Nightflight._logHeaderWritten = true;
+        //strcpy(headerString, "");
+    }
+    //Datenausgabe LogView kompatibel 
+    THESERIAL.print("$");
+    THESERIAL.print(Nightflight.ax);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.ay);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.az);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.gx);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.gy);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.gz);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.pitch);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.yaw);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight.roll);
+    THESERIAL.print(";");
+    THESERIAL.print(Nightflight._absoluteAcceleration);
+    THESERIAL.print("\r\n");
+
+
+/*    char sendString [50];
+    char buf[20];
+    strcpy(sendString, "");
+
+    strcat(sendString, "$");
+
+    dtostrf((float)Nightflight.ax, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+   
+    dtostrf((float)Nightflight.ay, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+    
+    dtostrf((float)Nightflight.az, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+    
+    dtostrf((float)Nightflight.gx, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+   
+    dtostrf((float)Nightflight.gy, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+    
+    dtostrf((float)Nightflight.gz, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+    
+    dtostrf((float)Nightflight.pitch, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+   
+    dtostrf((float)Nightflight.yaw, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+    
+    dtostrf((float)Nightflight.roll, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ";");
+    strcpy(buf, "");
+    
+    dtostrf((float)Nightflight._absoluteAcceleration, 1, 2, buf);
+    strcat(sendString, buf);
+    strcat(sendString, ""); //last entry
+    strcpy(buf, "");
+        
+    THESERIAL.print(sendString);
+    THESERIAL.write('\r'); 
+    THESERIAL.println();
+    strcpy(sendString, "");*/
+}
+
 
 void renderTimerInfoBaseStationDataLoopCallback()
 {
@@ -202,11 +317,12 @@ CNightflight::CNightflight()
 }
 
 CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChannelPin2) 
-	: _debug(false), _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin), _rcChannelPin2(rcChannelPin2)
+	: _logHeaderWritten(false), _debug(false), _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin), _rcChannelPin2(rcChannelPin2)
 {
-	delay(3000); // sanity delay
+    _startTime = millis();
+	//delay(3000); // sanity delay
 	Serial.begin(115200);
-    Serial1.begin(115200);
+    Serial1.begin(57600);
 
 	//set up pin for RC input
     pinMode(_rcChannelPin, INPUT);
@@ -223,6 +339,10 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 	renderTimerInfoGyroUpdateLoop = &renderTimer.getRenderTimerInfo();
 	renderTimerInfoGyroUpdateLoop->setCallback(renderTimerInfoGyroUpdateLoopCallback);
 	renderTimerInfoGyroUpdateLoop->setUpdateIntervalMilliSeconds(0);
+
+    renderTimerInfoJlogLoop = &renderTimer.getRenderTimerInfo();
+    renderTimerInfoJlogLoop->setCallback(renderTimerInfoJlogLoopCallback);
+    renderTimerInfoJlogLoop->setUpdateIntervalMilliSeconds(12);
 
 	renderTimerInfoBaseStationDataLoop = &renderTimer.getRenderTimerInfo();
 	renderTimerInfoBaseStationDataLoop->setCallback(renderTimerInfoBaseStationDataLoopCallback);
@@ -244,6 +364,16 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 void CNightflight::setLSM9DS0(LSM9DS0* dof) 
 {
 #ifdef NIGHTFLIGHTUSELSMDM9DF0
+#define SDO 1
+#if SDO
+#define LSM9DS0_XM  0x1D // Would be 0x1D if SDO_XM is HIGH
+#define LSM9DS0_G   0x6B // Would be 0x6B if SDO_G is HIGH
+//#define MS5637_ADDRESS 0x76   // Address of altimeter
+#else 
+#define LSM9DS0_XM  0x1E // Would be 0x1E if SDO_XM is LOW
+#define LSM9DS0_G   0x6A // Would be 0x6A if SDO_G is LOW
+//#define MS5637_ADDRESS 0x76   // Address of altimeter
+#endif
 	if(_debug)
 	{
 		Serial.println("setLSM9DS0 start");
@@ -254,7 +384,8 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 	pinMode(INT1XM, INPUT);
 	pinMode(INT2XM, INPUT);
 	pinMode(DRDYG, INPUT);
-	// Use the begin() function to initialize the LSM9DS0 library.
+    pinMode(SDOpin,   OUTPUT);
+    digitalWrite(SDOpin, SDO);	// Use the begin() function to initialize the LSM9DS0 library.
 	// You can either call it with no parameters (the easy way):
 	uint32_t status = _dof->begin(_dof->G_SCALE_500DPS, _dof->A_SCALE_16G, _dof->M_SCALE_8GS);
 	// Or call it with declarations for sensor scales and data rates:  
@@ -267,7 +398,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 		Serial.println(status, HEX);
 		Serial.println("setLSM9DS0 end");
 	}
-
+    delay(3000);
 	// Set output data rates  
 	// Accelerometer output data rate (ODR) can be: A_ODR_3125 (3.225 Hz), A_ODR_625 (6.25 Hz), A_ODR_125 (12.5 Hz), A_ODR_25, A_ODR_50, 
 	//                                              A_ODR_100,  A_ODR_200, A_ODR_400, A_ODR_800, A_ODR_1600 (1600 Hz)
@@ -299,14 +430,20 @@ void CNightflight::updateGyroData()
     roll  = atan2(2.0f * (q[0] * q[1] + q[2] * q[3]), q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3]);
     pitch *= 180.0f / PI;
     yaw   *= 180.0f / PI; 
-    //yaw   += 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
+    yaw   += 1.9; // Declination at Osnabrück, Germany
     roll  *= 180.0f / PI;
 
 }
 
 void CNightflight::setMainLoopCallback(RenderTimerFunctionPointer mainLoopCallback)
 {
-	renderTimerInfoMainLoop->setCallback(mainLoopCallback);
+    _mainBackupFunctionPointer = mainLoopCallback;
+    renderTimerInfoMainLoop->setCallback(initializerCallback);
+}
+
+void CNightflight::resetMainLoopCallback()
+{
+    renderTimerInfoMainLoop->setCallback(_mainBackupFunctionPointer);
 }
 
 void CNightflight::setBPMLoopCallback(RenderTimerFunctionPointer bpmLoopCallback)
@@ -336,9 +473,16 @@ boolean CNightflight::isInBlockingLoop()
 
 void CNightflight::loop()
 {
+    uint64_t diff = millis() - _startTime;
+    if(!_initialized && diff > 15000)
+    {
+        _initialized = true;
+        Nightflight.resetMainLoopCallback();
+    }
 	//drive the differently timed loops
 	renderTimer.update();
 }
+
 
 
 

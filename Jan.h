@@ -91,10 +91,11 @@ void setupIndividual()
   vStripUntenRundrum.addLEDStrip(stripHaubeLinksUnten2);
   vStripUntenRundrum.addLEDStrip(stripHaubeRechtsUnten);
 
- // LEDVirtualStrip* allStrips[]  = { &vStripLinksOben, &vStripLinksUnten, &vStripLinksFinne, &vStripRechtsOben, &vStripRechtsUnten, &vStripRechtsFinne, &vStripObenRundrum, &vStripUntenRundrum }; 
 
-
-//  Nightflight._allStrips = allStrips;
+  /*Nightflight.addVirtualStrip(vStripLinksOben);
+  Nightflight.addVirtualStrip(vStripLinksUnten);
+  Nightflight.addVirtualStrip(vStripRechtsOben);
+  Nightflight.addVirtualStrip(vStripRechtsUnten);*/
 }
 
 

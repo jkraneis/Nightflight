@@ -208,7 +208,7 @@ struct BPMTimerInfo : public virtual RenderTimerInfo
 struct RenderTimer
 {
 	uint64_t _lastTime;
-	RenderTimerInfo _renderTimerInfoItems[5];
+	RenderTimerInfo _renderTimerInfoItems[6];
 	BPMTimerInfo _bpmTimerInfoItems[1];
 	uint8_t _renderTimerItemCounter;
 	uint8_t _bpmTimerItemCounter;
