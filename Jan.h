@@ -90,12 +90,6 @@ void setupIndividual()
   vStripUntenRundrum.addLEDStrip(stripHeckLinksUnten2);
   vStripUntenRundrum.addLEDStrip(stripHaubeLinksUnten2);
   vStripUntenRundrum.addLEDStrip(stripHaubeRechtsUnten);
-
-
-  /*Nightflight.addVirtualStrip(vStripLinksOben);
-  Nightflight.addVirtualStrip(vStripLinksUnten);
-  Nightflight.addVirtualStrip(vStripRechtsOben);
-  Nightflight.addVirtualStrip(vStripRechtsUnten);*/
 }
 
 

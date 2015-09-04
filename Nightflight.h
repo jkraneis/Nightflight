@@ -24,15 +24,46 @@ class LSM9DS0;
 
 #define FRAMES_PER_SECOND 40
 
+#define STATUS_LED 13
+
 // This needs to change for input from XBee
 #define RCCHANNELPIN1 17
 #define RCCHANNELPIN2 18
 #define NIGHTFLIGHT_BASESTATION true
 
+
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
 // SDO_XM and SDO_G are both grounded, therefore our addresses are:
 #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
 #define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
 
+// See MS5637-02BA03 Low Voltage Barometric Pressure Sensor Data Sheet
+#define MS5637_RESET      0x1E
+#define MS5637_CONVERT_D1 0x40
+#define MS5637_CONVERT_D2 0x50
+#define MS5637_ADC_READ   0x00
+
+#define SDO 1
+#if SDO
+#define LSM9DS0_XM  0x1D // Would be 0x1D if SDO_XM is HIGH
+#define LSM9DS0_G   0x6B // Would be 0x6B if SDO_G is HIGH
+#define MS5637_ADDRESS 0x76   // Address of altimeter
+#else 
+#define LSM9DS0_XM  0x1E // Would be 0x1E if SDO_XM is LOW
+#define LSM9DS0_G   0x6A // Would be 0x6A if SDO_G is LOW
+#define MS5637_ADDRESS 0x76   // Address of altimeter
+#endif
+
+#define ADC_256  0x00 // define pressure and temperature conversion rates
+#define ADC_512  0x02
+#define ADC_1024 0x04
+#define ADC_2048 0x06
+#define ADC_4096 0x08
+#define ADC_8192 0x0A
+#define ADC_D1   0x40
+#define ADC_D2   0x50
+
+#endif
 
 // global constants for 9 DoF fusion and AHRS (Attitude and Heading Reference System)
 #define GyroMeasError PI * (40.0f / 180.0f)       // gyroscope measurement error in rads/s (shown as 3 deg/s)
@@ -127,6 +158,7 @@ public:
 
 
 	boolean _logHeaderWritten;
+	boolean _statusLEDStatus = true;
 
 private:
 
@@ -149,6 +181,14 @@ private:
 	const byte INT2XM = 32; // INT2XM tells us when mag data is ready
 	const byte DRDYG = 24;  // DRDYG tells us when gyro data is ready
 	const byte SDOpin = 31;  // selects either of two I2C addresses
+
+	// Specify sensor full scale
+	uint8_t OSR = ADC_8192;     // set pressure amd temperature oversample rate
+	uint16_t Pcal[8];         // calibration constants from MS5637 PROM registers
+	unsigned char nCRC;       // calculated check sum to ensure PROM integrity
+	uint32_t D1 = 0, D2 = 0;  // raw MS5637 pressure and temperature data
+	double dT, OFFSET, SENS, T2, OFFSET2, SENS2;  // First order and second order corrections for raw S5637 temperature and pressure data
+	double Temperature, Pressure; // stores MS5637 pressures sensor pressure and temperature
 
 
 	RenderTimer renderTimer;

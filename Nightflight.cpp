@@ -33,7 +33,7 @@ class LSM9DS0;
 class LSM9DS0;
 #endif
 
-#define THESERIAL Serial
+#define THESERIAL Serial1
 
 //Instance of CNightflight
 CNightflight Nightflight;
@@ -54,7 +54,9 @@ void renderTimerInfoRCInputLoopCallback()
 
 void renderTimerInfoLEDLoopCallback()
 {
-    FastLED.show(); // display this frame
+    digitalWrite(STATUS_LED, Nightflight._statusLEDStatus);
+    Nightflight._statusLEDStatus = !Nightflight._statusLEDStatus;
+    FastLED.show();
 }
 
 void initializerCallback()
@@ -64,6 +66,12 @@ void initializerCallback()
 
 void MadgwickQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
 void MahonyQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
+void MS5637Reset();       
+void MS5637PromRead(uint16_t * destination);
+uint32_t MS5637Read(uint8_t CMD, uint8_t OSR);
+unsigned char MS5637checkCRC(uint16_t * n_prom);
+
+
 
 void renderTimerInfoGyroUpdateLoopCallback()
 {
@@ -116,9 +124,67 @@ void renderTimerInfoGyroUpdateLoopCallback()
 #endif 
 }
 
+void renderTimerInfoAltitudeCallback()
+{
+/*    D1 = MS5637Read(ADC_D1, OSR);  // get raw pressure value
+    D2 = MS5637Read(ADC_D2, OSR);  // get raw temperature value
+    dT = D2 - Pcal[5]*pow(2,8);    // calculate temperature difference from reference
+    OFFSET = Pcal[2]*pow(2, 17) + dT*Pcal[4]/pow(2,6);
+    SENS = Pcal[1]*pow(2,16) + dT*Pcal[3]/pow(2,7);
+ 
+    Temperature = (2000 + (dT*Pcal[6])/pow(2, 23))/100;           // First-order Temperature in degrees Centigrade
+//
+// Second order corrections
+    if(Temperature > 20) 
+    {
+      T2 = 5*dT*dT/pow(2, 38); // correction for high temperatures
+      OFFSET2 = 0;
+      SENS2 = 0;
+    }
+    if(Temperature < 20)                   // correction for low temperature
+    {
+      T2      = 3*dT*dT/pow(2, 33); 
+      OFFSET2 = 61*(Temperature - 2000)*(Temperature - 2000)/16;
+      SENS2   = 29*(Temperature - 2000)*(Temperature - 2000)/16;
+    } 
+    if(Temperature < -15)                      // correction for very low temperature
+    {
+      OFFSET2 = OFFSET2 + 17*(Temperature + 1500)*(Temperature + 1500);
+      SENS2 = SENS2 + 9*(Temperature + 1500)*(Temperature + 1500);
+    }
+ // End of second order corrections
+ //
+     Temperature = Temperature - T2;
+     OFFSET = OFFSET - OFFSET2;
+     SENS = SENS - SENS2;
+ 
+     Pressure = (((D1*SENS)/pow(2, 21) - OFFSET)/pow(2, 15))/100;  // Pressure in mbar or kPa
+  
+    const int station_elevation_m = 1050.0*0.3048; // Accurate for the roof on my house; convert from feet to meters
+
+    float baroin = Pressure; // pressure is now in millibars
+
+    // Formula to correct absolute pressure in millbars to "altimeter pressure" in inches of mercury 
+    // comparable to weather report pressure
+    float part1 = baroin - 0.3; //Part 1 of formula
+    const float part2 = 0.0000842288;
+    float part3 = pow(part1, 0.190284);
+    float part4 = (float)station_elevation_m / part3;
+    float part5 = (1.0 + (part2 * part4));
+    float part6 = pow(part5, 5.2553026);
+    float altimeter_setting_pressure_mb = part1 * part6; // Output is now in adjusted millibars
+    baroin = altimeter_setting_pressure_mb * 0.02953;
+
+    float altitude = 145366.45*(1. - pow((Pressure/1013.25), 0.190284));
+   
+    Serial.print("Digital pressure value = "); Serial.print((float) Pressure, 2);  Serial.println(" mbar");// pressure in millibar
+    Serial.print("Altitude = "); Serial.print(altitude, 2); Serial.println(" feet");
+*/
+}
+
 void renderTimerInfoJlogLoopCallback()
 {
-    if(!Nightflight._initialized)
+    if(!Nightflight._initialized || Nightflight.isInBlockingLoop())
     {
         return;
     }
@@ -127,14 +193,8 @@ void renderTimerInfoJlogLoopCallback()
         THESERIAL.print("$N$;My Data\r\n");
         THESERIAL.print("$C$;AccX [G];AccY [G];AccZ [G];GyX [DPS];GyY [DPS];GyZ [DPS];Pitch [Deg];Yaw [Deg]; Roll [Deg];AbsAcc [G]\r\n");
         THESERIAL.print("$I$;12\r\n");
-        //char headerString [200];
-        //strcpy(headerString, "");
-        //strcat(headerString, "$N$;My Data\r\n");
-        //strcat(headerString, "$C$;AccX [G];AccY [G];AccZ [G];GyX [DPS];GyY [DPS];GyZ [DPS];Pitch [Deg];Yaw [Deg]; Roll [Deg];AbsAcc [G]\r\n");
-        //strcat(headerString, "$I$;8\r\n");
-        //THESERIAL.print(headerString);
+ 
         Nightflight._logHeaderWritten = true;
-        //strcpy(headerString, "");
     }
     //Datenausgabe LogView kompatibel 
     THESERIAL.print("$");
@@ -158,68 +218,6 @@ void renderTimerInfoJlogLoopCallback()
     THESERIAL.print(";");
     THESERIAL.print(Nightflight._absoluteAcceleration);
     THESERIAL.print("\r\n");
-
-
-/*    char sendString [50];
-    char buf[20];
-    strcpy(sendString, "");
-
-    strcat(sendString, "$");
-
-    dtostrf((float)Nightflight.ax, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-   
-    dtostrf((float)Nightflight.ay, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-    
-    dtostrf((float)Nightflight.az, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-    
-    dtostrf((float)Nightflight.gx, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-   
-    dtostrf((float)Nightflight.gy, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-    
-    dtostrf((float)Nightflight.gz, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-    
-    dtostrf((float)Nightflight.pitch, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-   
-    dtostrf((float)Nightflight.yaw, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-    
-    dtostrf((float)Nightflight.roll, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ";");
-    strcpy(buf, "");
-    
-    dtostrf((float)Nightflight._absoluteAcceleration, 1, 2, buf);
-    strcat(sendString, buf);
-    strcat(sendString, ""); //last entry
-    strcpy(buf, "");
-        
-    THESERIAL.print(sendString);
-    THESERIAL.write('\r'); 
-    THESERIAL.println();
-    strcpy(sendString, "");*/
 }
 
 
@@ -328,6 +326,9 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
     pinMode(_rcChannelPin, INPUT);
     pinMode(_rcChannelPin2, INPUT);
 
+    pinMode(STATUS_LED, OUTPUT);
+    digitalWrite(STATUS_LED, _statusLEDStatus);
+    _statusLEDStatus = !_statusLEDStatus;
 	// Attach an interrupt handler to be called whenever
 	// the pin changes from LOW to HIGH or vice versa
     attachInterrupt(_rcChannelPin, RCchannel1, CHANGE);
@@ -364,16 +365,9 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 void CNightflight::setLSM9DS0(LSM9DS0* dof) 
 {
 #ifdef NIGHTFLIGHTUSELSMDM9DF0
-#define SDO 1
-#if SDO
-#define LSM9DS0_XM  0x1D // Would be 0x1D if SDO_XM is HIGH
-#define LSM9DS0_G   0x6B // Would be 0x6B if SDO_G is HIGH
-//#define MS5637_ADDRESS 0x76   // Address of altimeter
-#else 
-#define LSM9DS0_XM  0x1E // Would be 0x1E if SDO_XM is LOW
-#define LSM9DS0_G   0x6A // Would be 0x6A if SDO_G is LOW
-//#define MS5637_ADDRESS 0x76   // Address of altimeter
-#endif
+    digitalWrite(STATUS_LED, _statusLEDStatus);
+    _statusLEDStatus = !_statusLEDStatus;
+
 	if(_debug)
 	{
 		Serial.println("setLSM9DS0 start");
@@ -398,7 +392,11 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 		Serial.println(status, HEX);
 		Serial.println("setLSM9DS0 end");
 	}
-    delay(3000);
+    digitalWrite(STATUS_LED, _statusLEDStatus);
+    _statusLEDStatus = !_statusLEDStatus;
+    delay(5000);
+    digitalWrite(STATUS_LED, _statusLEDStatus);
+    _statusLEDStatus = !_statusLEDStatus;
 	// Set output data rates  
 	// Accelerometer output data rate (ODR) can be: A_ODR_3125 (3.225 Hz), A_ODR_625 (6.25 Hz), A_ODR_125 (12.5 Hz), A_ODR_25, A_ODR_50, 
 	//                                              A_ODR_100,  A_ODR_200, A_ODR_400, A_ODR_800, A_ODR_1600 (1600 Hz)
@@ -418,8 +416,35 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 	_dof->setMagODR(_dof->M_ODR_625); // Set magnetometer to update every 80 ms
 	// Use the FIFO mode to average accelerometer and gyro readings to calculate the biases, which can then be removed from
 	// all subsequent measurements.
-    delay(2000);
+//    delay(2000);
 	_dof->calLSM9DS0(gbias, abias);
+
+  // Reset the MS5637 pressure sensor
+     digitalWrite(STATUS_LED, _statusLEDStatus);
+    _statusLEDStatus = !_statusLEDStatus;
+    MS5637Reset();
+    delay(100);
+    digitalWrite(STATUS_LED, _statusLEDStatus);
+    _statusLEDStatus = !_statusLEDStatus;
+    Serial.println("MS5637 pressure sensor reset...");
+    // Read PROM data from MS5637 pressure sensor
+    MS5637PromRead(Pcal);
+    Serial.println("PROM data read:");
+    Serial.print("C0 = "); Serial.println(Pcal[0]);
+    unsigned char refCRC = Pcal[0] >> 12;
+    Serial.print("C1 = "); Serial.println(Pcal[1]);
+    Serial.print("C2 = "); Serial.println(Pcal[2]);
+    Serial.print("C3 = "); Serial.println(Pcal[3]);
+    Serial.print("C4 = "); Serial.println(Pcal[4]);
+    Serial.print("C5 = "); Serial.println(Pcal[5]);
+    Serial.print("C6 = "); Serial.println(Pcal[6]);
+
+    nCRC = MS5637checkCRC(Pcal);  //calculate checksum to ensure integrity of MS5637 calibration data
+    Serial.print("Checksum = "); Serial.print(nCRC); Serial.print(" , should be "); Serial.println(refCRC);  
+  
+    digitalWrite(STATUS_LED, _statusLEDStatus);
+    _statusLEDStatus = !_statusLEDStatus;
+    delay(1000);  
 #endif
 }
 
@@ -484,6 +509,90 @@ void CNightflight::loop()
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//Useful functions
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// I2C communication with the MS5637 is a little different from that with the MPU9250 and most other sensors
+// For the MS5637, we write commands, and the MS5637 sends data in response, rather than directly reading
+// MS5637 registers
+
+void MS5637Reset()
+{
+    Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
+    Wire1.write(MS5637_RESET);                // Put reset command in Tx buffer
+    Wire1.endTransmission();                  // Send the Tx buffer
+}
+
+void MS5637PromRead(uint16_t * destination)
+{
+    uint8_t data[2] = {0,0};
+    for (uint8_t ii = 0; ii < 7; ii++) 
+    {
+        Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
+        Wire1.write(0xA0 | ii << 1);              // Put PROM address in Tx buffer
+        Wire1.endTransmission(I2C_NOSTOP);        // Send the Tx buffer, but send a restart to keep connection alive
+        uint8_t i = 0;
+        Wire1.requestFrom(MS5637_ADDRESS, 2);   // Read two bytes from slave PROM address 
+        while ( Wire1.available()) 
+        {
+            data[i++] =  Wire1.read(); 
+        }               // Put read results in the Rx buffer
+        destination[ii] = (uint16_t) (((uint16_t) data[0] << 8) | data[1]); // construct PROM data for return to main program
+    }
+}
+
+uint32_t MS5637Read(uint8_t CMD, uint8_t OSR)  // temperature data read
+{
+    Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
+    Wire1.write(CMD | OSR);                  // Put pressure conversion command in Tx buffer
+    Wire1.endTransmission(I2C_NOSTOP);        // Send the Tx buffer, but send a restart to keep connection alive
+
+    switch (OSR)
+    {
+        case ADC_256: delay(1); break;  // delay for conversion to complete
+        case ADC_512: delay(3); break;
+        case ADC_1024: delay(4); break;
+        case ADC_2048: delay(6); break;
+        case ADC_4096: delay(10); break;
+        case ADC_8192: delay(20); break;
+    }
+
+    uint8_t data[3] = {0,0,0};
+    Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
+    Wire1.write(0x00);                        // Put ADC read command in Tx buffer
+    Wire1.endTransmission(I2C_NOSTOP);        // Send the Tx buffer, but send a restart to keep connection alive
+    uint8_t i = 0;
+    Wire1.requestFrom(MS5637_ADDRESS, 3);     // Read three bytes from slave PROM address 
+    while ( Wire1.available()) 
+    {
+        data[i++] =  Wire1.read(); 
+    }               // Put read results in the Rx buffer
+    return (uint32_t) (((uint32_t) data[0] << 16) | (uint32_t) data[1] << 8 | data[2]); // construct PROM data for return to main program
+}
+
+
+
+unsigned char MS5637checkCRC(uint16_t * n_prom)  // calculate checksum from PROM register contents
+{
+  int cnt;
+  unsigned int n_rem = 0;
+  unsigned char n_bit;
+  
+  n_prom[0] = ((n_prom[0]) & 0x0FFF);  // replace CRC byte by 0 for checksum calculation
+  n_prom[7] = 0;
+  for(cnt = 0; cnt < 16; cnt++)
+  {
+    if(cnt%2==1) n_rem ^= (unsigned short) ((n_prom[cnt>>1]) & 0x00FF);
+    else         n_rem ^= (unsigned short)  (n_prom[cnt>>1]>>8);
+    for(n_bit = 8; n_bit > 0; n_bit--)
+    {
+        if(n_rem & 0x8000)    n_rem = (n_rem<<1) ^ 0x3000;
+        else                  n_rem = (n_rem<<1);
+    }
+  }
+  n_rem = ((n_rem>>12) & 0x000F);
+  return (n_rem ^ 0x00);
+}
 
 
 // Implementation of Sebastian Madgwick's "...efficient orientation filter for... inertial/magnetic sensor arrays"
