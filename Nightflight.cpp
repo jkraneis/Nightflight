@@ -422,11 +422,11 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
   // Reset the MS5637 pressure sensor
      digitalWrite(STATUS_LED, _statusLEDStatus);
     _statusLEDStatus = !_statusLEDStatus;
-    MS5637Reset();
+   // MS5637Reset();
     delay(100);
     digitalWrite(STATUS_LED, _statusLEDStatus);
     _statusLEDStatus = !_statusLEDStatus;
-    Serial.println("MS5637 pressure sensor reset...");
+    /*Serial.println("MS5637 pressure sensor reset...");
     // Read PROM data from MS5637 pressure sensor
     MS5637PromRead(Pcal);
     Serial.println("PROM data read:");
@@ -441,7 +441,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 
     nCRC = MS5637checkCRC(Pcal);  //calculate checksum to ensure integrity of MS5637 calibration data
     Serial.print("Checksum = "); Serial.print(nCRC); Serial.print(" , should be "); Serial.println(refCRC);  
-  
+  */
     digitalWrite(STATUS_LED, _statusLEDStatus);
     _statusLEDStatus = !_statusLEDStatus;
     delay(1000);  
@@ -518,13 +518,16 @@ void CNightflight::loop()
 
 void MS5637Reset()
 {
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
     Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
     Wire1.write(MS5637_RESET);                // Put reset command in Tx buffer
     Wire1.endTransmission();                  // Send the Tx buffer
+#endif
 }
 
 void MS5637PromRead(uint16_t * destination)
 {
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
     uint8_t data[2] = {0,0};
     for (uint8_t ii = 0; ii < 7; ii++) 
     {
@@ -539,10 +542,12 @@ void MS5637PromRead(uint16_t * destination)
         }               // Put read results in the Rx buffer
         destination[ii] = (uint16_t) (((uint16_t) data[0] << 8) | data[1]); // construct PROM data for return to main program
     }
+#endif
 }
 
 uint32_t MS5637Read(uint8_t CMD, uint8_t OSR)  // temperature data read
 {
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
     Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
     Wire1.write(CMD | OSR);                  // Put pressure conversion command in Tx buffer
     Wire1.endTransmission(I2C_NOSTOP);        // Send the Tx buffer, but send a restart to keep connection alive
@@ -568,6 +573,7 @@ uint32_t MS5637Read(uint8_t CMD, uint8_t OSR)  // temperature data read
         data[i++] =  Wire1.read(); 
     }               // Put read results in the Rx buffer
     return (uint32_t) (((uint32_t) data[0] << 16) | (uint32_t) data[1] << 8 | data[2]); // construct PROM data for return to main program
+#endif
 }
 
 

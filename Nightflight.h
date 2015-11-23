@@ -33,9 +33,6 @@ class LSM9DS0;
 
 
 #ifdef NIGHTFLIGHTUSELSMDM9DF0
-// SDO_XM and SDO_G are both grounded, therefore our addresses are:
-#define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
-#define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
 
 // See MS5637-02BA03 Low Voltage Barometric Pressure Sensor Data Sheet
 #define MS5637_RESET      0x1E
@@ -182,6 +179,7 @@ private:
 	const byte DRDYG = 24;  // DRDYG tells us when gyro data is ready
 	const byte SDOpin = 31;  // selects either of two I2C addresses
 
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
 	// Specify sensor full scale
 	uint8_t OSR = ADC_8192;     // set pressure amd temperature oversample rate
 	uint16_t Pcal[8];         // calibration constants from MS5637 PROM registers
@@ -189,7 +187,7 @@ private:
 	uint32_t D1 = 0, D2 = 0;  // raw MS5637 pressure and temperature data
 	double dT, OFFSET, SENS, T2, OFFSET2, SENS2;  // First order and second order corrections for raw S5637 temperature and pressure data
 	double Temperature, Pressure; // stores MS5637 pressures sensor pressure and temperature
-
+#endif
 
 	RenderTimer renderTimer;
 	RenderTimerInfo* renderTimerInfoGyroUpdateLoop;
