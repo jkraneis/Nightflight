@@ -24,6 +24,8 @@ Rainbow	KEYWORD1
 Fire	KEYWORD1
 Fade	KEYWORD1
 Radius	KEYWORD1
+Twinkle	KEYWORD1
+Stroboscope	KEYWORD1
 
 #Parameter
 Parameter	KEYWORD1

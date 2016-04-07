@@ -27,8 +27,9 @@ class LSM9DS0;
 #define STATUS_LED 13
 
 // This needs to change for input from XBee
-#define RCCHANNELPIN1 17
-#define RCCHANNELPIN2 18
+#define RCCHANNELPIN1 3
+#define RCCHANNELPIN2 11
+#define RCCHANNELPIN3 4
 #define NIGHTFLIGHT_BASESTATION true
 
 
@@ -87,7 +88,7 @@ class CNightflight
 
 public:
 	CNightflight();
-	CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChannelPin2);
+	CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChannelPin2, uint8_t rcChannelPin3);
 	void loop();
 
 	void setDebug(boolean debug) {_debug = debug;}
@@ -131,6 +132,11 @@ public:
 	uint16_t currentChannelData2;
 	boolean wasUpdating2 = false;
 
+	volatile uint16_t channel3 = 1120;
+	uint32_t channel_start3;
+	uint16_t currentChannelData3;
+	boolean wasUpdating3 = false;
+
 
 //9DoF variables for direct access :(
 
@@ -150,6 +156,20 @@ public:
 	float temperature;
 	float abias[3] = {0, 0, 0}, gbias[3] = {0, 0, 0};
 
+
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
+	// Specify sensor full scale
+	uint8_t OSR = ADC_8192;     // set pressure amd temperature oversample rate
+	uint16_t Pcal[8];         // calibration constants from MS5637 PROM registers
+	unsigned char nCRC;       // calculated check sum to ensure PROM integrity
+	uint32_t D1 = 0, D2 = 0;  // raw MS5637 pressure and temperature data
+	double dT, OFFSET, SENS, T2, OFFSET2, SENS2, GLOBALALTOFFSET;  // First order and second order corrections for raw S5637 temperature and pressure data
+	double Temperature, Pressure; // stores MS5637 pressures sensor pressure and temperature
+	float Altitude;
+	bool _readTempNext = true;	
+#endif
+
+
 //Base Station data retrieval
 	uint8_t _rms[7] = {0, 0, 0, 0, 0, 0, 0};
 
@@ -167,6 +187,7 @@ private:
 
 	uint8_t _rcChannelPin;
 	uint8_t _rcChannelPin2;
+	uint8_t _rcChannelPin3;
 
 	double _bpmDrift = 0.0;
 
@@ -179,18 +200,10 @@ private:
 	const byte DRDYG = 24;  // DRDYG tells us when gyro data is ready
 	const byte SDOpin = 31;  // selects either of two I2C addresses
 
-#ifdef NIGHTFLIGHTUSELSMDM9DF0
-	// Specify sensor full scale
-	uint8_t OSR = ADC_8192;     // set pressure amd temperature oversample rate
-	uint16_t Pcal[8];         // calibration constants from MS5637 PROM registers
-	unsigned char nCRC;       // calculated check sum to ensure PROM integrity
-	uint32_t D1 = 0, D2 = 0;  // raw MS5637 pressure and temperature data
-	double dT, OFFSET, SENS, T2, OFFSET2, SENS2;  // First order and second order corrections for raw S5637 temperature and pressure data
-	double Temperature, Pressure; // stores MS5637 pressures sensor pressure and temperature
-#endif
 
 	RenderTimer renderTimer;
 	RenderTimerInfo* renderTimerInfoGyroUpdateLoop;
+	RenderTimerInfo* renderTimerInfoAltitudeUpdateLoop;
 	RenderTimerInfo* renderTimerInfoJlogLoop;
 	RenderTimerInfo* renderTimerInfoBaseStationDataLoop;
 	RenderTimerInfo* renderTimerInfoMainLoop;

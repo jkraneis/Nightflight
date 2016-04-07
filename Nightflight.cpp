@@ -24,6 +24,7 @@ Distributed as-is; no warranty is given.
 //Forward declaration for LSM9DS0 class - if not used
 class LSM9DS0;
 // includes for the LSM9DS0 library
+#define NIGHTFLIGHTUSELSMDM9DF0
 #ifdef NIGHTFLIGHTUSELSMDM9DF0
 #include <SPI.h>
 #include <i2c_t3.h>
@@ -47,8 +48,12 @@ void renderTimerInfoRCInputLoopCallback()
     Nightflight.currentChannelData2 = Nightflight.channel2;
     if(Nightflight.isDebug())
     {
-		Serial.print("Channel: ");
-		Serial.println(Nightflight.currentChannelData);
+        Serial.print("Channel1: ");
+        Serial.println(Nightflight.currentChannelData);
+        Serial.print("Channel2: ");
+        Serial.println(Nightflight.currentChannelData2);
+        Serial.print("Channel3: ");
+        Serial.println(Nightflight.currentChannelData3);
 	}
 }
 
@@ -69,6 +74,8 @@ void MahonyQuaternionUpdate(float ax, float ay, float az, float gx, float gy, fl
 void MS5637Reset();       
 void MS5637PromRead(uint16_t * destination);
 uint32_t MS5637Read(uint8_t CMD, uint8_t OSR);
+void MS5637InitRead(uint8_t CMD, uint8_t OSR);
+uint32_t MS5637EndRead(uint8_t CMD, uint8_t OSR);
 unsigned char MS5637checkCRC(uint16_t * n_prom);
 
 
@@ -107,8 +114,8 @@ void renderTimerInfoGyroUpdateLoopCallback()
     Nightflight.my = dof->calcMag(dof->my);
     Nightflight.mz = dof->calcMag(dof->mz);
     
-    dof->readTemp();
-    Nightflight.temperature = 21.0 + (float) dof->temperature/8.; // slope is 8 LSB per degree C, just guessing at the intercept
+//    dof->readTemp();
+//    Nightflight.temperature = 21.0 + (float) dof->temperature/8.; // slope is 8 LSB per degree C, just guessing at the intercept
   }
 
   Nightflight.Now = micros();
@@ -126,43 +133,49 @@ void renderTimerInfoGyroUpdateLoopCallback()
 
 void renderTimerInfoAltitudeCallback()
 {
-/*    D1 = MS5637Read(ADC_D1, OSR);  // get raw pressure value
-    D2 = MS5637Read(ADC_D2, OSR);  // get raw temperature value
-    dT = D2 - Pcal[5]*pow(2,8);    // calculate temperature difference from reference
-    OFFSET = Pcal[2]*pow(2, 17) + dT*Pcal[4]/pow(2,6);
-    SENS = Pcal[1]*pow(2,16) + dT*Pcal[3]/pow(2,7);
+    if(Nightflight._readTempNext)
+    {
+        Nightflight.D2 = MS5637EndRead(ADC_D2, Nightflight.OSR);  // get raw pressure value        
+    }
+    else
+    {
+        Nightflight.D1 = MS5637EndRead(ADC_D1, Nightflight.OSR);  // get raw pressure value        
+    }
+    Nightflight.dT = Nightflight.D2 - Nightflight.Pcal[5]*pow(2,8);    // calculate temperature difference from reference
+    Nightflight.OFFSET = Nightflight.Pcal[2]*pow(2, 17) + Nightflight.dT*Nightflight.Pcal[4]/pow(2,6);
+    Nightflight.SENS = Nightflight.Pcal[1]*pow(2,16) + Nightflight.dT*Nightflight.Pcal[3]/pow(2,7);
  
-    Temperature = (2000 + (dT*Pcal[6])/pow(2, 23))/100;           // First-order Temperature in degrees Centigrade
+    Nightflight.Temperature = (2000 + (Nightflight.dT*Nightflight.Pcal[6])/pow(2, 23))/100;           // First-order Temperature in degrees Centigrade
 //
 // Second order corrections
-    if(Temperature > 20) 
+    if(Nightflight.Temperature > 20) 
     {
-      T2 = 5*dT*dT/pow(2, 38); // correction for high temperatures
-      OFFSET2 = 0;
-      SENS2 = 0;
+      Nightflight.T2 = 5*Nightflight.dT*Nightflight.dT/pow(2, 38); // correction for high temperatures
+      Nightflight.OFFSET2 = 0;
+      Nightflight.SENS2 = 0;
     }
-    if(Temperature < 20)                   // correction for low temperature
+    if(Nightflight.Temperature < 20)                   // correction for low temperature
     {
-      T2      = 3*dT*dT/pow(2, 33); 
-      OFFSET2 = 61*(Temperature - 2000)*(Temperature - 2000)/16;
-      SENS2   = 29*(Temperature - 2000)*(Temperature - 2000)/16;
+      Nightflight.T2      = 3*Nightflight.dT*Nightflight.dT/pow(2, 33); 
+      Nightflight.OFFSET2 = 61*(Nightflight.Temperature - 2000)*(Nightflight.Temperature - 2000)/16;
+      Nightflight.SENS2   = 29*(Nightflight.Temperature - 2000)*(Nightflight.Temperature - 2000)/16;
     } 
-    if(Temperature < -15)                      // correction for very low temperature
+    if(Nightflight.Temperature < -15)                      // correction for very low temperature
     {
-      OFFSET2 = OFFSET2 + 17*(Temperature + 1500)*(Temperature + 1500);
-      SENS2 = SENS2 + 9*(Temperature + 1500)*(Temperature + 1500);
+      Nightflight.OFFSET2 = Nightflight.OFFSET2 + 17*(Nightflight.Temperature + 1500)*(Nightflight.Temperature + 1500);
+      Nightflight.SENS2 = Nightflight.SENS2 + 9*(Nightflight.Temperature + 1500)*(Nightflight.Temperature + 1500);
     }
  // End of second order corrections
  //
-     Temperature = Temperature - T2;
-     OFFSET = OFFSET - OFFSET2;
-     SENS = SENS - SENS2;
+     Nightflight.Temperature = Nightflight.Temperature - Nightflight.T2;
+     Nightflight.OFFSET = Nightflight.OFFSET - Nightflight.OFFSET2;
+     Nightflight.SENS = Nightflight.SENS - Nightflight.SENS2;
  
-     Pressure = (((D1*SENS)/pow(2, 21) - OFFSET)/pow(2, 15))/100;  // Pressure in mbar or kPa
+     Nightflight.Pressure = (((Nightflight.D1*Nightflight.SENS)/pow(2, 21) - Nightflight.OFFSET)/pow(2, 15))/100;  // Pressure in mbar or kPa
   
     const int station_elevation_m = 1050.0*0.3048; // Accurate for the roof on my house; convert from feet to meters
 
-    float baroin = Pressure; // pressure is now in millibars
+    float baroin = Nightflight.Pressure; // pressure is now in millibars
 
     // Formula to correct absolute pressure in millbars to "altimeter pressure" in inches of mercury 
     // comparable to weather report pressure
@@ -175,16 +188,35 @@ void renderTimerInfoAltitudeCallback()
     float altimeter_setting_pressure_mb = part1 * part6; // Output is now in adjusted millibars
     baroin = altimeter_setting_pressure_mb * 0.02953;
 
-    float altitude = 145366.45*(1. - pow((Pressure/1013.25), 0.190284));
+    float altitude = 145366.45*(1. - pow((Nightflight.Pressure/1013.25), 0.190284));
+
+    if(Nightflight.GLOBALALTOFFSET > altitude) //Assuming the lowest point is the starting point...
+    {
+        Nightflight.GLOBALALTOFFSET = altitude;
+    }
+
+    Nightflight.Altitude = altitude;
    
-    Serial.print("Digital pressure value = "); Serial.print((float) Pressure, 2);  Serial.println(" mbar");// pressure in millibar
-    Serial.print("Altitude = "); Serial.print(altitude, 2); Serial.println(" feet");
-*/
+ /*   Serial.print("Digital pressure value = "); Serial.print((float) Nightflight.Pressure, 2);  Serial.println(" mbar");// pressure in millibar
+    Serial.print("Altitude - offset = "); Serial.print(altitude - Nightflight.GLOBALALTOFFSET, 2); Serial.println(" feet");
+    Serial.print("Altitude  = "); Serial.print(altitude , 2); Serial.println(" feet");
+    Serial.print("Temperature  = "); Serial.print(Nightflight.Temperature , 2); Serial.println(" degree");*/
+
+    Nightflight._readTempNext = !Nightflight._readTempNext;
+    if(Nightflight._readTempNext)
+    {
+        MS5637InitRead(ADC_D2, Nightflight.OSR);
+    }
+    else
+    {
+        MS5637InitRead(ADC_D1, Nightflight.OSR);
+    }
+
 }
 
 void renderTimerInfoJlogLoopCallback()
 {
-    if(!Nightflight._initialized || Nightflight.isInBlockingLoop())
+    /*if(!Nightflight._initialized || Nightflight.isInBlockingLoop())
     {
         return;
     }
@@ -217,7 +249,7 @@ void renderTimerInfoJlogLoopCallback()
     THESERIAL.print(Nightflight.roll);
     THESERIAL.print(";");
     THESERIAL.print(Nightflight._absoluteAcceleration);
-    THESERIAL.print("\r\n");
+    THESERIAL.print("\r\n");*/
 }
 
 
@@ -247,7 +279,7 @@ void RCchannel1()
         Nightflight.wasUpdating = true;
         if(Nightflight.isDebug())
         {
-            Serial.println("RC Channel read skipped due to blocking LED loop.");
+            Serial.println("RC Channel 1 read skipped due to blocking LED loop.");
         }
         return;
     }
@@ -282,7 +314,7 @@ void RCchannel2()
         Nightflight.wasUpdating2 = true;
         if(Nightflight.isDebug())
         {
-            Serial.println("RC Channel read skipped due to blocking LED loop.");
+            Serial.println("RC Channel 2 read skipped due to blocking LED loop.");
         }
         return;
     }
@@ -306,16 +338,51 @@ void RCchannel2()
     }
 }
 
+//RC Input Channel implementations
+
+void RCchannel3() 
+{
+    // If the pin is HIGH, start a timer
+    boolean ledUpdating = Nightflight.isInBlockingLoop();
+    if(ledUpdating)
+    {
+        Nightflight.wasUpdating3 = true;
+        if(Nightflight.isDebug())
+        {
+            Serial.println("RC Channel 3 read skipped due to blocking LED loop.");
+        }
+        return;
+    }
+    int chn = digitalRead(RCCHANNELPIN3);
+    if (chn == HIGH) 
+    {
+        Nightflight.channel_start3 = micros();
+    } 
+    else 
+    {
+        // The pin is now LOW so output the difference
+        // between when the timer was started and now
+        if(!Nightflight.wasUpdating3)
+        {
+            Nightflight.channel3 = (uint16_t) (micros() - Nightflight.channel_start3);
+        }
+        else
+        {
+            Nightflight.wasUpdating3 = false;
+        }
+    }
+}
+
 
 
 
 CNightflight::CNightflight() 
-	: CNightflight(FRAMES_PER_SECOND, RCCHANNELPIN1, RCCHANNELPIN2)
+	: CNightflight(FRAMES_PER_SECOND, RCCHANNELPIN1, RCCHANNELPIN2, RCCHANNELPIN3)
 {
 }
 
-CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChannelPin2) 
-	: _logHeaderWritten(false), _debug(false), _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin), _rcChannelPin2(rcChannelPin2)
+CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChannelPin2, uint8_t rcChannelPin3) 
+	: _logHeaderWritten(false), _debug(false), _fpsLEDs(fpsLEDs), _rcChannelPin(rcChannelPin), _rcChannelPin2(rcChannelPin2), _rcChannelPin3(rcChannelPin3)
 {
     _startTime = millis();
 	//delay(3000); // sanity delay
@@ -325,6 +392,7 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 	//set up pin for RC input
     pinMode(_rcChannelPin, INPUT);
     pinMode(_rcChannelPin2, INPUT);
+    pinMode(_rcChannelPin3, INPUT);
 
     pinMode(STATUS_LED, OUTPUT);
     digitalWrite(STATUS_LED, _statusLEDStatus);
@@ -333,6 +401,7 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 	// the pin changes from LOW to HIGH or vice versa
     attachInterrupt(_rcChannelPin, RCchannel1, CHANGE);
     attachInterrupt(_rcChannelPin2, RCchannel2, CHANGE);
+    attachInterrupt(_rcChannelPin3, RCchannel3, CHANGE);
 
 
 
@@ -340,6 +409,10 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 	renderTimerInfoGyroUpdateLoop = &renderTimer.getRenderTimerInfo();
 	renderTimerInfoGyroUpdateLoop->setCallback(renderTimerInfoGyroUpdateLoopCallback);
 	renderTimerInfoGyroUpdateLoop->setUpdateIntervalMilliSeconds(0);
+
+    renderTimerInfoAltitudeUpdateLoop = &renderTimer.getRenderTimerInfo();
+    renderTimerInfoAltitudeUpdateLoop->setCallback(renderTimerInfoAltitudeCallback);
+    renderTimerInfoAltitudeUpdateLoop->setUpdateIntervalMilliSeconds(20);
 
     renderTimerInfoJlogLoop = &renderTimer.getRenderTimerInfo();
     renderTimerInfoJlogLoop->setCallback(renderTimerInfoJlogLoopCallback);
@@ -350,10 +423,10 @@ CNightflight::CNightflight(uint8_t fpsLEDs, uint8_t rcChannelPin, uint8_t rcChan
 	renderTimerInfoBaseStationDataLoop->setUpdateIntervalMilliSeconds(1000/_fpsLEDs);
 
 	renderTimerInfoMainLoop = &renderTimer.getRenderTimerInfo();
-	renderTimerInfoMainLoop->setUpdateIntervalMilliSeconds(25);
+	renderTimerInfoMainLoop->setUpdateIntervalMilliSeconds(1000/_fpsLEDs);
 	renderTimerRCInputLoop = &renderTimer.getRenderTimerInfo();
 	renderTimerRCInputLoop->setCallback(renderTimerInfoRCInputLoopCallback);
-	renderTimerRCInputLoop->setUpdateIntervalMilliSeconds(25);
+	renderTimerRCInputLoop->setUpdateIntervalMilliSeconds(1000/_fpsLEDs);
 
 	bpmTimerInfoLoop = &renderTimer.getBPMTimerInfo();
 
@@ -422,29 +495,31 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
   // Reset the MS5637 pressure sensor
      digitalWrite(STATUS_LED, _statusLEDStatus);
     _statusLEDStatus = !_statusLEDStatus;
-   // MS5637Reset();
+    MS5637Reset();
     delay(100);
     digitalWrite(STATUS_LED, _statusLEDStatus);
     _statusLEDStatus = !_statusLEDStatus;
-    /*Serial.println("MS5637 pressure sensor reset...");
+    Serial.println("MS5637 pressure sensor reset...");
     // Read PROM data from MS5637 pressure sensor
     MS5637PromRead(Pcal);
-    Serial.println("PROM data read:");
-    Serial.print("C0 = "); Serial.println(Pcal[0]);
-    unsigned char refCRC = Pcal[0] >> 12;
-    Serial.print("C1 = "); Serial.println(Pcal[1]);
+/*    Serial.println("PROM data read:");
+    Serial.print("C0 = "); Serial.println(Pcal[0]);*/
+/*    Serial.print("C1 = "); Serial.println(Pcal[1]);
     Serial.print("C2 = "); Serial.println(Pcal[2]);
     Serial.print("C3 = "); Serial.println(Pcal[3]);
     Serial.print("C4 = "); Serial.println(Pcal[4]);
     Serial.print("C5 = "); Serial.println(Pcal[5]);
-    Serial.print("C6 = "); Serial.println(Pcal[6]);
+    Serial.print("C6 = "); Serial.println(Pcal[6]);*/
 
     nCRC = MS5637checkCRC(Pcal);  //calculate checksum to ensure integrity of MS5637 calibration data
-    Serial.print("Checksum = "); Serial.print(nCRC); Serial.print(" , should be "); Serial.println(refCRC);  
-  */
+//    Serial.print("Checksum = "); Serial.print(nCRC); Serial.print(" , should be "); Serial.println(refCRC);  
+  
     digitalWrite(STATUS_LED, _statusLEDStatus);
     _statusLEDStatus = !_statusLEDStatus;
     delay(1000);  
+
+    Nightflight.D2 = MS5637Read(ADC_D2, Nightflight.OSR);  // get raw temperature value
+    GLOBALALTOFFSET = 145366.45*(1. - pow((Pressure/1013.25), 0.190284));
 #endif
 }
 
@@ -545,21 +620,47 @@ void MS5637PromRead(uint16_t * destination)
 #endif
 }
 
-uint32_t MS5637Read(uint8_t CMD, uint8_t OSR)  // temperature data read
+void MS5637InitRead(uint8_t CMD, uint8_t OSR)  // temperature data read
 {
 #ifdef NIGHTFLIGHTUSELSMDM9DF0
     Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
     Wire1.write(CMD | OSR);                  // Put pressure conversion command in Tx buffer
     Wire1.endTransmission(I2C_NOSTOP);        // Send the Tx buffer, but send a restart to keep connection alive
+#endif
+}
+
+uint32_t MS5637EndRead(uint8_t CMD, uint8_t OSR)  // temperature data read
+{
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
+    uint8_t data[3] = {0,0,0};
+    Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
+    Wire1.write(0x00);                        // Put ADC read command in Tx buffer
+    Wire1.endTransmission(I2C_NOSTOP);        // Send the Tx buffer, but send a restart to keep connection alive
+    uint8_t i = 0;
+    Wire1.requestFrom(MS5637_ADDRESS, 3);     // Read three bytes from slave PROM address 
+    while ( Wire1.available()) 
+    {
+        data[i++] =  Wire1.read(); 
+    }               // Put read results in the Rx buffer
+    return (uint32_t) (((uint32_t) data[0] << 16) | (uint32_t) data[1] << 8 | data[2]); // construct PROM data for return to main program
+#endif
+}
+
+uint32_t MS5637Read(uint8_t CMD, uint8_t OSR)  // temperature data read
+{
+#ifdef NIGHTFLIGHTUSELSMDM9DF0
+     Wire1.beginTransmission(MS5637_ADDRESS);  // Initialize the Tx buffer
+    Wire1.write(CMD | OSR);                  // Put pressure conversion command in Tx buffer
+    Wire1.endTransmission(I2C_NOSTOP);        // Send the Tx buffer, but send a restart to keep connection alive
 
     switch (OSR)
     {
-        case ADC_256: delay(1); break;  // delay for conversion to complete
-        case ADC_512: delay(3); break;
-        case ADC_1024: delay(4); break;
-        case ADC_2048: delay(6); break;
-        case ADC_4096: delay(10); break;
-        case ADC_8192: delay(20); break;
+      case ADC_256: delay(1); break;  // delay for conversion to complete
+      case ADC_512: delay(3); break;
+      case ADC_1024: delay(4); break;
+      case ADC_2048: delay(6); break;
+      case ADC_4096: delay(10); break;
+      case ADC_8192: delay(20); break;
     }
 
     uint8_t data[3] = {0,0,0};
@@ -575,6 +676,7 @@ uint32_t MS5637Read(uint8_t CMD, uint8_t OSR)  // temperature data read
     return (uint32_t) (((uint32_t) data[0] << 16) | (uint32_t) data[1] << 8 | data[2]); // construct PROM data for return to main program
 #endif
 }
+
 
 
 
