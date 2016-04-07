@@ -248,53 +248,211 @@ struct Brightness : public virtual LEDEffect
     }
 };
 
+struct Stroboscope : public virtual LEDEffect
+{
+    bool _on;
+
+    Stroboscope(bool startOn) 
+        : LEDEffect(true), _on(startOn)
+    {
+    }
+
+
+    virtual void render( struct LEDRow &data, uint8_t offset)
+    {
+        LEDEffect::render(data, offset);
+
+        int numLEDs = data.getNumLEDs();
+
+        for(int i = 0 + offset; i < numLEDs; i++) 
+        {
+            if(!_on)
+            {
+                data.setLEDColor( i, CRGB(0, 0, 0), false );
+            }
+        } 
+        _on = !_on;
+    }
+};
+
 
 
 struct Fire : public virtual LEDEffect
 {
-	uint8_t _cooling;
-	uint8_t _sparking;
+    uint8_t _cooling;
+    uint8_t _sparking;
+    bool _coldFire;
 
-	byte heat[256];
+    byte heat[256];
 
-	Fire() 
-        : LEDEffect(false), _cooling(50), _sparking(120)
+    Fire() 
+        : LEDEffect(false), _cooling(50), _sparking(120), _coldFire(false)
     {
     }
 
-	Fire(uint8_t cooling, uint8_t sparking) 
-        : LEDEffect(false), _cooling(cooling), _sparking(sparking)
+    Fire(uint8_t cooling, uint8_t sparking, bool coldFire) 
+        : LEDEffect(false), _cooling(cooling), _sparking(sparking), _coldFire(coldFire)
     {
+    }
+
+    CRGB ColdColor( uint8_t temperature)
+    {
+        CRGB heatcolor;
+
+        // Scale 'heat' down from 0-255 to 0-191,
+        // which can then be easily divided into three
+        // equal 'thirds' of 64 units each.
+        uint8_t t192 = scale8_video( temperature, 192);
+
+        // calculate a value that ramps up from
+        // zero to 255 in each 'third' of the scale.
+        uint8_t heatramp = t192 & 0x3F; // 0..63
+        heatramp <<= 2; // scale up to 0..252
+
+        // now figure out which third of the spectrum we're in:
+        if( t192 & 0x80) {
+            // we're in the hottest third
+            heatcolor.r = heatramp; // full red
+            heatcolor.g = 255; // full green
+            heatcolor.b = 255; // ramp up blue
+
+        } else if( t192 & 0x40 ) {
+            // we're in the middle third
+            heatcolor.r = 0; // full red
+            heatcolor.g = heatramp; // ramp up green
+            heatcolor.b = 255; // no blue
+
+        } else {
+            // we're in the coolest third
+            heatcolor.r = 0; // ramp up red
+            heatcolor.g = 0; // no green
+            heatcolor.b = heatramp; // no blue
+        }
+
+        return heatcolor;
     }
 
     virtual void render( struct LEDRow &data, uint8_t offset)
-   	{
+    {
         LEDEffect::render(data, offset);
 
-    	int numLEDs = data.getNumLEDs();
+        int numLEDs = data.getNumLEDs();
   // Step 1.  Cool down every cell a little
-	    for( int i = offset; i < numLEDs; i++) {
-	      heat[i] = qsub8( heat[i],  random8(0, ((_cooling * 10) / numLEDs) + 2));
-	    }
-	  
-	    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-	    for( int k= numLEDs - 1; k >= 2; k--) {
-	      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
-	    }
-	    
-	    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
-	    if( random8() < _sparking ) {
-	      int y = random8(7);
-	      heat[y] = qadd8( heat[y], random8(160,255) );
-	    }
+        for( int i = offset; i < numLEDs; i++) {
+          heat[i] = qsub8( heat[i],  random8(0, ((_cooling * 10) / numLEDs) + 2));
+        }
+      
+        // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+        for( int k= numLEDs - 1; k >= 2; k--) {
+          heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+        }
+        
+        // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+        if( random8() < _sparking ) {
+          int y = random8(7);
+          heat[y] = qadd8( heat[y], random8(160,255) );
+        }
 
-	    // Step 4.  Map from heat cells to LED colors
-	    for( int j = offset; j < numLEDs; j++) {
-            data.setLEDColor( j, HeatColor( heat[j]), _addRGB );
-//	        data[j] = HeatColor( heat[j]);
-	    }
+        // Step 4.  Map from heat cells to LED colors
+        for( int j = offset; j < numLEDs; j++) {
+            data.setLEDColor( j, _coldFire ? ColdColor( heat[j]) : HeatColor( heat[j]), _addRGB );
+//          data[j] = HeatColor( heat[j]);
+        }
    }
 };
+
+
+struct Twinkle : public virtual LEDEffect
+{
+    // Base background color
+//    #define BASE_COLOR       CRGB(32,0,32)
+    Parameter<CRGB>* _baseColorParameter;
+
+    // Peak color to twinkle up to
+//    #define PEAK_COLOR       CRGB(64,0,64)
+    Parameter<CRGB>* _peakColorParameter;
+
+
+    // Currently set to brighten up a bit faster than it dims down, 
+    // but this can be adjusted.
+
+    // Amount to increment the color by each loop as it gets brighter:
+//    #define DELTA_COLOR_UP   CRGB(4,0,4)
+    Parameter<CRGB>* _deltaUpColorParameter;
+
+    // Amount to decrement the color by each loop as it gets dimmer:
+//    #define DELTA_COLOR_DOWN CRGB(1,0,1)
+    Parameter<CRGB>* _deltaDownColorParameter;
+
+
+    // Chance of each pixel starting to brighten up.  
+    // 1 or 2 = a few brightening pixels at a time.
+    // 10 = lots of pixels brightening at a time.
+//    #define CHANCE_OF_TWINKLE 1
+    Parameter<uint8_t>* _chanceOfTwinkle;
+
+    enum { SteadyDim, GettingBrighter, GettingDimmerAgain };
+    uint8_t PixelState[256];
+
+
+    Twinkle(Parameter<uint8_t>* chanceOfTwinkle, Parameter<CRGB>* baseColorParameter, Parameter<CRGB>* peakColorParameter, Parameter<CRGB>* deltaUpColorParameter, Parameter<CRGB>* deltaDownColorParameter) 
+        : LEDEffect(false), _baseColorParameter(baseColorParameter), _peakColorParameter(peakColorParameter), _deltaUpColorParameter(deltaUpColorParameter), _deltaDownColorParameter(deltaDownColorParameter), _chanceOfTwinkle(chanceOfTwinkle)
+    {
+        memset( PixelState, sizeof(PixelState), SteadyDim); // initialize all the pixels to SteadyDim.
+    }
+
+    virtual void render( struct LEDRow &data, uint8_t offset)
+    {
+        LEDEffect::render(data, offset);
+
+        int numLEDs = data.getNumLEDs();
+
+        for( uint16_t i = 0; i < numLEDs; i++) 
+        {
+            if( PixelState[i] == SteadyDim) 
+            {
+                // this pixels is currently: SteadyDim
+                // so we randomly consider making it start getting brighter
+                if( random8() <= _chanceOfTwinkle->getValue()) 
+                {
+                    PixelState[i] = GettingBrighter;
+                }
+              
+            } 
+            else if( PixelState[i] == GettingBrighter ) 
+            {
+                // this pixels is currently: GettingBrighter
+                // so if it's at peak color, switch it to getting dimmer again
+                if( data[i] >= _peakColorParameter->getValue() ) 
+                {
+                    PixelState[i] = GettingDimmerAgain;
+                } 
+                else 
+                {
+                    // otherwise, just keep brightening it:
+                    data[i] += _deltaUpColorParameter->getValue();
+                }
+          
+            } 
+            else 
+            { // getting dimmer again
+                // this pixels is currently: GettingDimmerAgain
+                // so if it's back to base color, switch it to steady dim
+                if( data[i] <= _baseColorParameter->getValue() ) 
+                {
+                    data[i] = _baseColorParameter->getValue(); // reset to exact base color, in case we overshot
+                    PixelState[i] = SteadyDim;
+                } 
+                else 
+                {
+                // otherwise, just keep dimming it down:
+                    data[i] -= _deltaDownColorParameter->getValue();
+                }
+            }
+        }
+    }
+};
+
 
 struct Fade : public virtual LEDEffect
 {
