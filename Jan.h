@@ -97,5 +97,6 @@ void setRcChannelValues()
 {
   rcChannelSteps.setValue(map(Nightflight.currentChannelData, 955, 2090, 0, 10));
   rcChannelSteps2.setValue(map(Nightflight.currentChannelData2, 955, 2090, 0, 2));
+  rcChannelSteps3.setValue(map(Nightflight.currentChannelData3, 955, 2090, 0, 2));
 
 }

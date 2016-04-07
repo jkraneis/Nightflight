@@ -1,58 +1,78 @@
 #define BRIGHTNESS  20
-#define CHIPSET     WS2811
+#define CHIPSET     WS2812
 #define COLOR_ORDER GRB
 
-#define PIN_HAUBE_RECHTS_OBEN  2
-#define PIN_HAUBE_LINKS_UNTEN 14
-#define PIN_HAUBE_LINKS_OBEN   7
-#define PIN_HAUBE_RECHTS_UNTEN  8
+#define PIN_HAUBE_LINKS  2
+#define PIN_HAUBE_RECHTS 14
+#define PIN_HECK_LINKS   7
+#define PIN_HECK_RECHTS  8
 
-#define PIN_HECK_RECHTS_OBEN  6
-#define PIN_HECK_LINKS_UNTEN 20
-#define PIN_HECK_LINKS_OBEN   21
-#define PIN_HECK_RECHTS_UNTEN  5
+#define PIN_HECK_UNTEN  6
+#define PIN_KUFE_LINKS 20
+#define PIN_KUFE_RECHTS   21
+//#define PIN_HECK_RECHTS_UNTEN  5
 
-#define NUM_LEDS_HAUBE_LINKS_OBEN 39
-#define NUM_LEDS_HAUBE_LINKS_UNTEN 37
-#define NUM_LEDS_HECK_LINKS_OBEN 35
-#define NUM_LEDS_HECK_LINKS_UNTEN 47  //11 for the fin
+#define NUM_LEDS_HAUBE_LINKS 77   // 38 unten, 39 oben
+#define NUM_LEDS_HAUBE_LINKS_OBEN 39   
+#define NUM_LEDS_HAUBE_LINKS_UNTEN 38   
 
-#define NUM_LEDS_HAUBE_RECHTS_OBEN 39
-#define NUM_LEDS_HAUBE_RECHTS_UNTEN 37
-#define NUM_LEDS_HECK_RECHTS_OBEN 35
-#define NUM_LEDS_HECK_RECHTS_UNTEN 47  //11 for the fin
+#define NUM_LEDS_HAUBE_RECHTS 77  // 38 unten, 39 oben
+#define NUM_LEDS_HAUBE_RECHTS_OBEN 39   
+#define NUM_LEDS_HAUBE_RECHTS_UNTEN 38 
+
+#define NUM_LEDS_HECK_LINKS 94    // 39 unten, 12 finne unten, 5 finne oben, 38 oben
+#define NUM_LEDS_HECK_LINKS_OBEN 38   
+#define NUM_LEDS_FINNE_LINKS_OBEN 5   
+#define NUM_LEDS_FINNE_LINKS_UNTEN 12   
+#define NUM_LEDS_HECK_LINKS_UNTEN 39   
+
+#define NUM_LEDS_HECK_RECHTS 94   // 39 unten, 12 finne unten, 5 finne oben, 38 oben
+#define NUM_LEDS_HECK_RECHTS_OBEN 38   
+#define NUM_LEDS_FINNE_RECHTS_OBEN 5   
+#define NUM_LEDS_FINNE_RECHTS_UNTEN 12   
+#define NUM_LEDS_HECK_RECHTS_UNTEN 39  
+
+#define NUM_LEDS_HECK_UNTEN 39    //
+
+#define NUM_LEDS_KUFE_LINKS 28
+#define NUM_LEDS_KUFE_RECHTS 28
 
 
 
-CRGB ledsHaubeLinksOben[NUM_LEDS_HAUBE_LINKS_OBEN];
-CRGB ledsHaubeLinksUnten[NUM_LEDS_HAUBE_LINKS_UNTEN];
-CRGB ledsHeckLinksOben[NUM_LEDS_HECK_LINKS_OBEN];
-CRGB ledsHeckLinksUnten[NUM_LEDS_HECK_LINKS_UNTEN];
+CRGB ledsHaubeLinks[NUM_LEDS_HAUBE_LINKS];
+CRGB ledsHaubeRechts[NUM_LEDS_HAUBE_RECHTS];
+CRGB ledsHeckLinks[NUM_LEDS_HECK_LINKS];
+CRGB ledsHeckRechts[NUM_LEDS_HECK_RECHTS];
 
-CRGB ledsHaubeRechtsOben[NUM_LEDS_HAUBE_RECHTS_OBEN];
-CRGB ledsHaubeRechtsUnten[NUM_LEDS_HAUBE_RECHTS_UNTEN];
-CRGB ledsHeckRechtsOben[NUM_LEDS_HECK_RECHTS_OBEN];
-CRGB ledsHeckRechtsUnten[NUM_LEDS_HECK_RECHTS_UNTEN];
+CRGB ledsHeckUnten[NUM_LEDS_HECK_UNTEN];
+
+CRGB ledsKufeLinks[NUM_LEDS_KUFE_LINKS];
+CRGB ledsKufeRechts[NUM_LEDS_KUFE_RECHTS];
 
 
-LEDStrip stripHaubeLinksOben(ledsHaubeLinksOben, NUM_LEDS_HAUBE_LINKS_OBEN, false);
-LEDStrip stripHaubeLinksUnten(ledsHaubeLinksUnten, NUM_LEDS_HAUBE_LINKS_UNTEN, false);
-LEDStrip stripHeckLinksOben(ledsHeckLinksOben, NUM_LEDS_HECK_LINKS_OBEN, true);
-LEDStrip stripHeckLinksUnten(ledsHeckLinksUnten, NUM_LEDS_HECK_LINKS_UNTEN, true, 0, 0);
-LEDStrip stripLinksFinne(ledsHeckLinksUnten, NUM_LEDS_HECK_LINKS_UNTEN, false, 36, 0);
+LEDStrip stripHaubeLinksOben(ledsHaubeLinks, NUM_LEDS_HAUBE_LINKS, true, NUM_LEDS_HAUBE_LINKS_UNTEN, 0);
+LEDStrip stripHaubeLinksUnten(ledsHaubeLinks, NUM_LEDS_HAUBE_LINKS, false, 0, NUM_LEDS_HAUBE_LINKS_OBEN);
+LEDStrip stripHeckLinksUnten(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, 0, NUM_LEDS_HECK_LINKS_OBEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN);
+LEDStrip stripHeckLinksOben(ledsHeckLinks, NUM_LEDS_HECK_LINKS, false, NUM_LEDS_HECK_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN, 0);
+LEDStrip stripLinksFinne(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, NUM_LEDS_HECK_LINKS_UNTEN, NUM_LEDS_HECK_LINKS_OBEN);
 
-LEDStrip stripHaubeRechtsOben(ledsHaubeRechtsOben, NUM_LEDS_HAUBE_RECHTS_OBEN, false);
-LEDStrip stripHaubeRechtsUnten(ledsHaubeRechtsUnten, NUM_LEDS_HAUBE_RECHTS_UNTEN, false);
-LEDStrip stripHeckRechtsOben(ledsHeckRechtsOben, NUM_LEDS_HECK_RECHTS_OBEN, true);
-LEDStrip stripHeckRechtsUnten(ledsHeckRechtsUnten, NUM_LEDS_HECK_RECHTS_UNTEN, true, 0, 0);
-LEDStrip stripRechtsFinne(ledsHeckRechtsUnten, NUM_LEDS_HECK_RECHTS_UNTEN, false, 36, 0);
+LEDStrip stripHeckUnten(ledsHeckUnten, NUM_LEDS_HECK_UNTEN, false);
+LEDStrip stripKufeLinks(ledsKufeLinks, NUM_LEDS_KUFE_LINKS, false);
+LEDStrip stripKufeRechts(ledsKufeRechts, NUM_LEDS_KUFE_RECHTS, false);
 
-LEDStrip stripHaubeLinksOben2(ledsHaubeLinksOben, NUM_LEDS_HAUBE_LINKS_OBEN, true);
-LEDStrip stripHeckLinksOben2(ledsHeckLinksOben, NUM_LEDS_HECK_LINKS_OBEN, false);
 
-LEDStrip stripHaubeRechtsUnten2(ledsHaubeRechtsUnten, NUM_LEDS_HAUBE_RECHTS_UNTEN, false, 0, 11);
-LEDStrip stripHaubeLinksUnten2(ledsHaubeLinksUnten, NUM_LEDS_HAUBE_LINKS_UNTEN, true);
-LEDStrip stripHeckLinksUnten2(ledsHeckLinksUnten, NUM_LEDS_HECK_LINKS_UNTEN, false, 0, 11);
+LEDStrip stripHaubeRechtsOben(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS, true, NUM_LEDS_HAUBE_RECHTS_UNTEN, 0);
+LEDStrip stripHaubeRechtsUnten(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS, false, 0, NUM_LEDS_HAUBE_RECHTS_OBEN);
+LEDStrip stripHeckRechtsUnten(ledsHeckRechts, NUM_LEDS_HECK_RECHTS, true, 0, NUM_LEDS_HECK_RECHTS_OBEN + NUM_LEDS_FINNE_RECHTS_UNTEN + NUM_LEDS_FINNE_RECHTS_OBEN);
+LEDStrip stripHeckRechtsOben(ledsHeckRechts, NUM_LEDS_HECK_RECHTS, false, NUM_LEDS_HECK_RECHTS_UNTEN + NUM_LEDS_FINNE_RECHTS_UNTEN + NUM_LEDS_FINNE_RECHTS_OBEN, 0);
+LEDStrip stripRechtsFinne(ledsHeckRechts, NUM_LEDS_HECK_RECHTS, true, NUM_LEDS_HECK_RECHTS_UNTEN, NUM_LEDS_HECK_RECHTS_OBEN);
+
+LEDStrip stripHaubeLinksOben2(ledsHaubeLinks, NUM_LEDS_HAUBE_LINKS, false, NUM_LEDS_HAUBE_LINKS_UNTEN, 0);
+LEDStrip stripHeckLinksOben2(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, 0, NUM_LEDS_HECK_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN);
+
+LEDStrip stripHaubeRechtsUnten2(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS, true, 0, NUM_LEDS_HAUBE_RECHTS_OBEN);
+LEDStrip stripHaubeLinksUnten2(ledsHaubeLinks, NUM_LEDS_HAUBE_LINKS, true, 0, NUM_LEDS_HAUBE_LINKS_OBEN);
+LEDStrip stripHeckLinksUnten2(ledsHeckLinks, NUM_LEDS_HECK_LINKS, false, NUM_LEDS_HECK_LINKS_OBEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN, 0);
 
 
 
@@ -67,28 +87,36 @@ LEDVirtualStrip vStripRechtsFinne;
 LEDVirtualStrip vStripObenRundrum;
 LEDVirtualStrip vStripUntenRundrum;
 
+LEDVirtualStrip vStripHeckUnten;
+LEDVirtualStrip vStripKufeLinks;
+LEDVirtualStrip vStripKufeRechts;
+
+
 void setupIndividual()
 {
   //set up the LED hardware
-  FastLED.addLeds<CHIPSET, PIN_HAUBE_LINKS_OBEN, COLOR_ORDER>(ledsHaubeLinksOben, NUM_LEDS_HAUBE_LINKS_OBEN).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, PIN_HAUBE_LINKS_UNTEN, COLOR_ORDER>(ledsHaubeLinksUnten, NUM_LEDS_HAUBE_LINKS_UNTEN).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, PIN_HECK_LINKS_OBEN, COLOR_ORDER>(ledsHeckLinksOben, NUM_LEDS_HECK_LINKS_OBEN).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, PIN_HECK_LINKS_UNTEN, COLOR_ORDER>(ledsHeckLinksUnten, NUM_LEDS_HECK_LINKS_UNTEN).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_HAUBE_LINKS, COLOR_ORDER>(ledsHaubeLinks, NUM_LEDS_HAUBE_LINKS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_HAUBE_RECHTS, COLOR_ORDER>(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_HECK_LINKS, COLOR_ORDER>(ledsHeckLinks, NUM_LEDS_HECK_LINKS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_HECK_RECHTS, COLOR_ORDER>(ledsHeckRechts, NUM_LEDS_HECK_RECHTS).setCorrection( TypicalLEDStrip );
   
-  FastLED.addLeds<CHIPSET, PIN_HAUBE_RECHTS_OBEN, COLOR_ORDER>(ledsHaubeRechtsOben, NUM_LEDS_HAUBE_RECHTS_OBEN).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, PIN_HAUBE_RECHTS_UNTEN, COLOR_ORDER>(ledsHaubeRechtsUnten, NUM_LEDS_HAUBE_RECHTS_UNTEN).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, PIN_HECK_RECHTS_OBEN, COLOR_ORDER>(ledsHeckRechtsOben, NUM_LEDS_HECK_RECHTS_OBEN).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<CHIPSET, PIN_HECK_RECHTS_UNTEN, COLOR_ORDER>(ledsHeckRechtsUnten, NUM_LEDS_HECK_RECHTS_UNTEN).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_HECK_UNTEN, COLOR_ORDER>(ledsHeckUnten, NUM_LEDS_HECK_UNTEN).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_KUFE_LINKS, COLOR_ORDER>(ledsKufeLinks, NUM_LEDS_KUFE_LINKS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, PIN_KUFE_RECHTS, COLOR_ORDER>(ledsKufeRechts, NUM_LEDS_KUFE_RECHTS).setCorrection( TypicalLEDStrip );
   
   vStripLinksOben.addLEDStrip(stripHaubeLinksOben);
-  vStripLinksOben.addLEDStrip(stripHeckLinksOben);  
+  vStripLinksOben.addLEDStrip(stripHeckLinksOben); 
+
   vStripLinksFinne.addLEDStrip(stripLinksFinne);
+
   vStripLinksUnten.addLEDStrip(stripHaubeLinksUnten);
   vStripLinksUnten.addLEDStrip(stripHeckLinksUnten);
 
   vStripRechtsOben.addLEDStrip(stripHaubeRechtsOben);
   vStripRechtsOben.addLEDStrip(stripHeckRechtsOben);  
+
   vStripRechtsFinne.addLEDStrip(stripRechtsFinne);
+
   vStripRechtsUnten.addLEDStrip(stripHaubeRechtsUnten);
   vStripRechtsUnten.addLEDStrip(stripHeckRechtsUnten);
 
@@ -102,54 +130,15 @@ void setupIndividual()
   vStripUntenRundrum.addLEDStrip(stripHaubeLinksUnten2);
   vStripUntenRundrum.addLEDStrip(stripHaubeRechtsUnten);
 
+  vStripHeckUnten.addLEDStrip(stripHeckUnten);
+  vStripKufeLinks.addLEDStrip(stripKufeLinks);
+  vStripKufeRechts.addLEDStrip(stripKufeRechts);
 
- 
 }
 
 void setRcChannelValues()
 {
-  uint8_t rcChannel1Value = 199;
-
-  if(Nightflight.currentChannelData > 880 && Nightflight.currentChannelData < 1000)
-  {
-    rcChannel1Value = 0;
-  } else
-  if(Nightflight.currentChannelData > 1100 && Nightflight.currentChannelData < 1200)
-  {
-    rcChannel1Value = 1;
-  } else
-  if(Nightflight.currentChannelData > 1250 && Nightflight.currentChannelData < 1350)
-  {
-    rcChannel1Value = 2;
-  } else
-  if(Nightflight.currentChannelData > 1400 && Nightflight.currentChannelData < 1460)
-  {
-    rcChannel1Value = 3;
-  } else
-  if(Nightflight.currentChannelData > 1470 && Nightflight.currentChannelData < 1550)
-  {
-    rcChannel1Value = 4;
-  } else
-  if(Nightflight.currentChannelData > 1600 && Nightflight.currentChannelData < 1680)
-  {
-    rcChannel1Value = 5;
-  } else
-  if(Nightflight.currentChannelData > 1700 && Nightflight.currentChannelData < 1800)
-  {
-    rcChannel1Value = 6;
-  } else
-  if(Nightflight.currentChannelData > 1810 && Nightflight.currentChannelData < 1900)
-  {
-    rcChannel1Value = 7;
-  } else
-  if(Nightflight.currentChannelData > 1950 && Nightflight.currentChannelData < 2000)
-  {
-    rcChannel1Value = 8;
-  } else
-  if(Nightflight.currentChannelData > 2020 && Nightflight.currentChannelData < 2100)
-  {
-    rcChannel1Value = 9;
-  } 
-
-  rcChannelSteps.setValue(rcChannel1Value);
+  rcChannelSteps.setValue(map(Nightflight.currentChannelData, 955, 2200, 0, 9));
+  rcChannelSteps2.setValue(Nightflight.currentChannelData2);
+  rcChannelSteps3.setValue(Nightflight.currentChannelData3); //Pitch channel
 }
