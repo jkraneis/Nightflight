@@ -8,9 +8,9 @@
 #define PIN_HECK_RECHTS  8
 
 #define PIN_HECK_UNTEN  6
-#define PIN_KUFE_LINKS 20
+//#define PIN_KUFE_LINKS 20
 #define PIN_KUFE_RECHTS   21
-//#define PIN_HECK_RECHTS_UNTEN  5
+#define PIN_KUFE_LINKS  5
 
 #define NUM_LEDS_HAUBE_LINKS 77   // 38 unten, 39 oben
 #define NUM_LEDS_HAUBE_LINKS_OBEN 39   
@@ -56,7 +56,7 @@ LEDStrip stripHeckLinksUnten(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, 0, NUM_LE
 LEDStrip stripHeckLinksOben(ledsHeckLinks, NUM_LEDS_HECK_LINKS, false, NUM_LEDS_HECK_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN, 0);
 LEDStrip stripLinksFinne(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, NUM_LEDS_HECK_LINKS_UNTEN, NUM_LEDS_HECK_LINKS_OBEN);
 
-LEDStrip stripHeckUnten(ledsHeckUnten, NUM_LEDS_HECK_UNTEN, false);
+LEDStrip stripHeckUnten(ledsHeckUnten, NUM_LEDS_HECK_UNTEN, true);
 LEDStrip stripKufeLinks(ledsKufeLinks, NUM_LEDS_KUFE_LINKS, false);
 LEDStrip stripKufeRechts(ledsKufeRechts, NUM_LEDS_KUFE_RECHTS, false);
 
@@ -68,11 +68,11 @@ LEDStrip stripHeckRechtsOben(ledsHeckRechts, NUM_LEDS_HECK_RECHTS, false, NUM_LE
 LEDStrip stripRechtsFinne(ledsHeckRechts, NUM_LEDS_HECK_RECHTS, true, NUM_LEDS_HECK_RECHTS_UNTEN, NUM_LEDS_HECK_RECHTS_OBEN);
 
 LEDStrip stripHaubeLinksOben2(ledsHaubeLinks, NUM_LEDS_HAUBE_LINKS, false, NUM_LEDS_HAUBE_LINKS_UNTEN, 0);
-LEDStrip stripHeckLinksOben2(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, 0, NUM_LEDS_HECK_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN);
+LEDStrip stripHeckLinksOben2(ledsHeckLinks, NUM_LEDS_HECK_LINKS, false, 0, NUM_LEDS_HECK_LINKS_OBEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN);
 
 LEDStrip stripHaubeRechtsUnten2(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS, true, 0, NUM_LEDS_HAUBE_RECHTS_OBEN);
 LEDStrip stripHaubeLinksUnten2(ledsHaubeLinks, NUM_LEDS_HAUBE_LINKS, true, 0, NUM_LEDS_HAUBE_LINKS_OBEN);
-LEDStrip stripHeckLinksUnten2(ledsHeckLinks, NUM_LEDS_HECK_LINKS, false, NUM_LEDS_HECK_LINKS_OBEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN, 0);
+LEDStrip stripHeckLinksUnten2(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, NUM_LEDS_HECK_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_UNTEN + NUM_LEDS_FINNE_LINKS_OBEN, 0);
 
 
 
@@ -87,9 +87,8 @@ LEDVirtualStrip vStripRechtsFinne;
 LEDVirtualStrip vStripObenRundrum;
 LEDVirtualStrip vStripUntenRundrum;
 
-LEDVirtualStrip vStripHeckUnten;
-LEDVirtualStrip vStripKufeLinks;
-LEDVirtualStrip vStripKufeRechts;
+LEDVirtualStrip vStripUntenLang;
+LEDVirtualStrip vStripUntenKurz;
 
 
 void setupIndividual()
@@ -130,15 +129,16 @@ void setupIndividual()
   vStripUntenRundrum.addLEDStrip(stripHaubeLinksUnten2);
   vStripUntenRundrum.addLEDStrip(stripHaubeRechtsUnten);
 
-  vStripHeckUnten.addLEDStrip(stripHeckUnten);
-  vStripKufeLinks.addLEDStrip(stripKufeLinks);
-  vStripKufeRechts.addLEDStrip(stripKufeRechts);
+  vStripUntenLang.addLEDStrip(stripKufeLinks);
+  vStripUntenLang.addLEDStrip(stripHeckUnten);
+  vStripUntenKurz.addLEDStrip(stripKufeRechts);
 
+  set_max_power_in_volts_and_milliamps(5, 14000);
 }
 
 void setRcChannelValues()
 {
-  rcChannelSteps.setValue(map(Nightflight.currentChannelData, 955, 2200, 0, 9));
+  rcChannelSteps.setValue(map(Nightflight.currentChannelData, 750, 2250, 0, 12));
   rcChannelSteps2.setValue(Nightflight.currentChannelData2);
   rcChannelSteps3.setValue(Nightflight.currentChannelData3); //Pitch channel
 }

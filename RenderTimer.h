@@ -13,7 +13,7 @@ struct RenderTimerInfo
 	uint64_t _lastUpdate;
 	uint64_t _updateIntervalMilliSeconds;
 	uint16_t _numberRepetitions;
-	boolean _performUpdate;
+	boolean _performUpdate = false;
 	boolean _isRepeatingTimer = false;
 	RenderTimerFunctionPointer callbackFunction = NULL;
 

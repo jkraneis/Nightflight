@@ -46,6 +46,7 @@ void renderTimerInfoRCInputLoopCallback()
 {
     Nightflight.currentChannelData = Nightflight.channel;
     Nightflight.currentChannelData2 = Nightflight.channel2;
+    Nightflight.currentChannelData3 = Nightflight.channel3;
     if(Nightflight.isDebug())
     {
         Serial.print("Channel1: ");
@@ -61,7 +62,9 @@ void renderTimerInfoLEDLoopCallback()
 {
     digitalWrite(STATUS_LED, Nightflight._statusLEDStatus);
     Nightflight._statusLEDStatus = !Nightflight._statusLEDStatus;
-    FastLED.show();
+      show_at_max_brightness_for_power();
+
+    //FastLED.show();
 }
 
 void initializerCallback()
@@ -197,11 +200,11 @@ void renderTimerInfoAltitudeCallback()
 
     Nightflight.Altitude = altitude;
    
- /*   Serial.print("Digital pressure value = "); Serial.print((float) Nightflight.Pressure, 2);  Serial.println(" mbar");// pressure in millibar
+   /* Serial.print("Digital pressure value = "); Serial.print((float) Nightflight.Pressure, 2);  Serial.println(" mbar");// pressure in millibar
     Serial.print("Altitude - offset = "); Serial.print(altitude - Nightflight.GLOBALALTOFFSET, 2); Serial.println(" feet");
     Serial.print("Altitude  = "); Serial.print(altitude , 2); Serial.println(" feet");
-    Serial.print("Temperature  = "); Serial.print(Nightflight.Temperature , 2); Serial.println(" degree");*/
-
+    Serial.print("Temperature  = "); Serial.print(Nightflight.Temperature , 2); Serial.println(" degree");
+*/
     Nightflight._readTempNext = !Nightflight._readTempNext;
     if(Nightflight._readTempNext)
     {
@@ -283,6 +286,7 @@ void RCchannel1()
         }
         return;
     }
+    noInterrupts();
     int chn = digitalRead(RCCHANNELPIN1);
     if (chn == HIGH) 
     {
@@ -301,6 +305,7 @@ void RCchannel1()
             Nightflight.wasUpdating = false;
         }
     }
+    interrupts();
 }
 
 //RC Input Channel implementations
@@ -318,6 +323,7 @@ void RCchannel2()
         }
         return;
     }
+    noInterrupts();
     int chn = digitalRead(RCCHANNELPIN2);
     if (chn == HIGH) 
     {
@@ -336,6 +342,7 @@ void RCchannel2()
             Nightflight.wasUpdating2 = false;
         }
     }
+    interrupts();
 }
 
 //RC Input Channel implementations
@@ -353,6 +360,7 @@ void RCchannel3()
         }
         return;
     }
+    noInterrupts();
     int chn = digitalRead(RCCHANNELPIN3);
     if (chn == HIGH) 
     {
@@ -371,6 +379,7 @@ void RCchannel3()
             Nightflight.wasUpdating3 = false;
         }
     }
+    interrupts();
 }
 
 
@@ -454,7 +463,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
     pinMode(SDOpin,   OUTPUT);
     digitalWrite(SDOpin, SDO);	// Use the begin() function to initialize the LSM9DS0 library.
 	// You can either call it with no parameters (the easy way):
-	uint32_t status = _dof->begin(_dof->G_SCALE_500DPS, _dof->A_SCALE_16G, _dof->M_SCALE_8GS);
+	uint32_t status = _dof->begin(_dof->G_SCALE_500DPS, _dof->A_SCALE_16G, _dof->M_SCALE_4GS);
 	// Or call it with declarations for sensor scales and data rates:  
 
 	if(_debug)
@@ -486,7 +495,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 	_dof->setGyroODR(_dof->G_ODR_190_BW_125);  // Set gyro update rate to 190 Hz with the smallest bandwidth for low noise
 
 	// Magnetometer output data rate can be: 3.125 (ODR_3125), 6.25 (ODR_625), 12.5 (ODR_125), 25, 50, or 100 Hz
-	_dof->setMagODR(_dof->M_ODR_625); // Set magnetometer to update every 80 ms
+	_dof->setMagODR(_dof->M_ODR_50); // Set magnetometer to update every 80 ms
 	// Use the FIFO mode to average accelerometer and gyro readings to calculate the biases, which can then be removed from
 	// all subsequent measurements.
 //    delay(2000);
@@ -541,6 +550,43 @@ void CNightflight::setMainLoopCallback(RenderTimerFunctionPointer mainLoopCallba
     renderTimerInfoMainLoop->setCallback(initializerCallback);
 }
 
+void CNightflight::setPitchChangeInputPin(uint8_t pinNumber) //can be 1-3
+{
+    if(pinNumber > 0 && pinNumber < 4)
+    {
+        _pitchChangeInputPin = pinNumber;
+    }
+    else
+    {
+        _pitchChangeInputPin = 3; //set to default
+    }
+}
+
+boolean CNightflight::getPitchDirectionChanged()
+{
+    boolean returnValue = false;
+    uint16_t currentPitchValue = 1500; //set to neutral
+    switch(_pitchChangeInputPin)
+    {
+        case 1 : currentPitchValue = currentChannelData;
+                    break;
+        case 2 : currentPitchValue = currentChannelData2;
+                    break;
+        case 3 :
+        default: currentPitchValue = currentChannelData3;
+                    break;
+    }
+    if((_pitchDirection && (_lastPitchValue - _pitchDirectionChangeThreshold) > currentPitchValue )
+        || (!_pitchDirection && (_lastPitchValue + _pitchDirectionChangeThreshold) < currentPitchValue ))
+    {
+        returnValue = true;
+        _pitchDirection = !_pitchDirection;
+    }
+    _lastPitchValue = currentPitchValue;
+    return returnValue;
+}
+
+
 void CNightflight::resetMainLoopCallback()
 {
     renderTimerInfoMainLoop->setCallback(_mainBackupFunctionPointer);
@@ -556,6 +602,12 @@ void CNightflight::startBPMTimer()
 	bpmTimerInfoLoop->start();
 }
 
+void CNightflight::setTimeSignatureTop(uint8_t signature)
+{
+    bpmTimerInfoLoop->setTimeSignatureTop(signature);
+}
+
+
 void CNightflight::stopBPMTimer()
 {
 	bpmTimerInfoLoop->stop();
@@ -568,7 +620,9 @@ void CNightflight::setBPM(double bpm)
 
 boolean CNightflight::isInBlockingLoop()
 {
-	return renderTimerInfoLEDLoop->getPerformingUpdate();
+	return renderTimerInfoLEDLoop->getPerformingUpdate(); 
+    /*|| renderTimerInfoGyroUpdateLoop->getPerformingUpdate()
+    || renderTimerInfoAltitudeUpdateLoop->getPerformingUpdate();*/
 }
 
 void CNightflight::loop()

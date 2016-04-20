@@ -99,6 +99,7 @@ public:
 
 	void setBPMLoopCallback(RenderTimerFunctionPointer bpmLoopCallback);
 	void setBPM(double bpm);
+	void setTimeSignatureTop(uint8_t signature);
 	void startBPMTimer();
 	void stopBPMTimer();
 	double getBPMDrift() {return bpmTimerInfoLoop->getBPMDrift();}
@@ -118,6 +119,9 @@ public:
 	void updateGyroData();
 
 	boolean isInBlockingLoop();
+
+	void setPitchChangeInputPin(uint8_t pinNumber = 3); //can be 1-3
+	boolean getPitchDirectionChanged();
 
 
 
@@ -188,6 +192,15 @@ private:
 	uint8_t _rcChannelPin;
 	uint8_t _rcChannelPin2;
 	uint8_t _rcChannelPin3;
+
+	//pitch change detection
+	uint8_t _pitchDirectionChangeThreshold = 25;
+	uint8_t _pitchChangeInputPin = 3;
+	uint16_t _lastPitchValue = 1500;
+	boolean _pitchDirection = true;
+	//end pitch change detection
+
+
 
 	double _bpmDrift = 0.0;
 
