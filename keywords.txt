@@ -31,6 +31,7 @@ Stroboscope	KEYWORD1
 Parameter	KEYWORD1
 StepParameter	KEYWORD1
 ParameterTimeLinear	KEYWORD1
+ParameterBeatGrid	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

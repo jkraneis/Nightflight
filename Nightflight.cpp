@@ -62,9 +62,9 @@ void renderTimerInfoLEDLoopCallback()
 {
     digitalWrite(STATUS_LED, Nightflight._statusLEDStatus);
     Nightflight._statusLEDStatus = !Nightflight._statusLEDStatus;
-      show_at_max_brightness_for_power();
+    //show_at_max_brightness_for_power();
 
-    //FastLED.show();
+    FastLED.show();
 }
 
 void initializerCallback()
@@ -276,6 +276,7 @@ void renderTimerInfoBaseStationDataLoopCallback()
 void RCchannel1() 
 {
     // If the pin is HIGH, start a timer
+    //        Serial.println("RC Channel 1 reading");
     boolean ledUpdating = Nightflight.isInBlockingLoop();
     if(ledUpdating)
     {
@@ -312,7 +313,8 @@ void RCchannel1()
 
 void RCchannel2() 
 {
-    // If the pin is HIGH, start a timer
+ //            Serial.println("RC Channel 2 reading");
+   // If the pin is HIGH, start a timer
     boolean ledUpdating = Nightflight.isInBlockingLoop();
     if(ledUpdating)
     {
@@ -349,7 +351,8 @@ void RCchannel2()
 
 void RCchannel3() 
 {
-    // If the pin is HIGH, start a timer
+             //Serial.println("RC Channel 3 reading");
+   // If the pin is HIGH, start a timer
     boolean ledUpdating = Nightflight.isInBlockingLoop();
     if(ledUpdating)
     {
@@ -456,6 +459,7 @@ void CNightflight::setLSM9DS0(LSM9DS0* dof)
 	}
 	_dof = dof; 
 	_useLSM9DS0 = true; 
+    delay(5000);
 	// Set up interrupt pins as inputs:
 	pinMode(INT1XM, INPUT);
 	pinMode(INT2XM, INPUT);
