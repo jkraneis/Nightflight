@@ -1,4 +1,5 @@
-#define BRIGHTNESS  20
+#define BRIGHTNESS  40
+#define RESCUEBRIGHTNESS  150
 #define CHIPSET     WS2812
 #define COLOR_ORDER GRB
 
@@ -62,6 +63,7 @@ LEDStrip stripKufeRechts(ledsKufeRechts, NUM_LEDS_KUFE_RECHTS, false);
 
 
 LEDStrip stripHaubeRechtsOben(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS, true, NUM_LEDS_HAUBE_RECHTS_UNTEN, 0);
+LEDStrip stripHaubeRechtsOben2(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS, false, NUM_LEDS_HAUBE_RECHTS_UNTEN, 0);
 LEDStrip stripHaubeRechtsUnten(ledsHaubeRechts, NUM_LEDS_HAUBE_RECHTS, false, 0, NUM_LEDS_HAUBE_RECHTS_OBEN);
 LEDStrip stripHeckRechtsUnten(ledsHeckRechts, NUM_LEDS_HECK_RECHTS, true, 0, NUM_LEDS_HECK_RECHTS_OBEN + NUM_LEDS_FINNE_RECHTS_UNTEN + NUM_LEDS_FINNE_RECHTS_OBEN);
 LEDStrip stripHeckRechtsOben(ledsHeckRechts, NUM_LEDS_HECK_RECHTS, false, NUM_LEDS_HECK_RECHTS_UNTEN + NUM_LEDS_FINNE_RECHTS_UNTEN + NUM_LEDS_FINNE_RECHTS_OBEN, 0);
@@ -77,18 +79,22 @@ LEDStrip stripHeckLinksUnten2(ledsHeckLinks, NUM_LEDS_HECK_LINKS, true, NUM_LEDS
 
 
 LEDVirtualStrip vStripLinksOben;
+LEDVirtualStrip vStripLinksOben2;
 LEDVirtualStrip vStripLinksUnten;
 LEDVirtualStrip vStripLinksFinne;
 
 LEDVirtualStrip vStripRechtsOben;
+LEDVirtualStrip vStripRechtsOben2;
 LEDVirtualStrip vStripRechtsUnten;
 LEDVirtualStrip vStripRechtsFinne;
 
 LEDVirtualStrip vStripObenRundrum;
 LEDVirtualStrip vStripUntenRundrum;
 
+
 LEDVirtualStrip vStripUntenLang;
 LEDVirtualStrip vStripUntenKurz;
+LEDVirtualStrip vStripUntenGesamt;
 
 
 void setupIndividual()
@@ -106,6 +112,9 @@ void setupIndividual()
   vStripLinksOben.addLEDStrip(stripHaubeLinksOben);
   vStripLinksOben.addLEDStrip(stripHeckLinksOben); 
 
+  vStripLinksOben2.addLEDStrip(stripHaubeLinksOben2);
+  vStripLinksOben2.addLEDStrip(stripHeckLinksOben); 
+
   vStripLinksFinne.addLEDStrip(stripLinksFinne);
 
   vStripLinksUnten.addLEDStrip(stripHaubeLinksUnten);
@@ -113,6 +122,9 @@ void setupIndividual()
 
   vStripRechtsOben.addLEDStrip(stripHaubeRechtsOben);
   vStripRechtsOben.addLEDStrip(stripHeckRechtsOben);  
+
+  vStripRechtsOben2.addLEDStrip(stripHaubeRechtsOben2);
+  vStripRechtsOben2.addLEDStrip(stripHeckRechtsOben);  
 
   vStripRechtsFinne.addLEDStrip(stripRechtsFinne);
 
@@ -132,6 +144,12 @@ void setupIndividual()
   vStripUntenLang.addLEDStrip(stripKufeLinks);
   vStripUntenLang.addLEDStrip(stripHeckUnten);
   vStripUntenKurz.addLEDStrip(stripKufeRechts);
+
+  vStripUntenGesamt.addLEDStrip(stripKufeLinks);
+  vStripUntenGesamt.addLEDStrip(stripHeckUnten);
+  vStripUntenGesamt.addLEDStrip(stripKufeRechts);
+
+
 
   set_max_power_in_volts_and_milliamps(5, 14000);
 }
